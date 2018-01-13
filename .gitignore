@@ -14,3 +14,4 @@
 .glide/
 
 .idea
+node_modules
