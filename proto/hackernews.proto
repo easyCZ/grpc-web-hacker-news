@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package grpc_web_hacker_news;
+
+message Item {
+    string id = 1;
+}
+
+service HackerNewsService {
+
+    rpc ListStories (ListStoriesRequest) returns (ListStoriesResponse);
+
+}
+
+message ListStoriesResponse {
+    repeated Item stories = 1;
+}
+message ListStoriesRequest {
+}
