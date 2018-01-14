@@ -10,7 +10,7 @@ export namespace HackerNewsService {
     static readonly methodName = "ListStories";
     static readonly service = HackerNewsService;
     static readonly requestStream = false;
-    static readonly responseStream = false;
+    static readonly responseStream = true;
     static readonly requestType = proto_hackernews_pb.ListStoriesRequest;
     static readonly responseType = proto_hackernews_pb.ListStoriesResponse;
   }

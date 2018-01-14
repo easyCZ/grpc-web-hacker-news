@@ -3,9 +3,49 @@
 
 import * as jspb from "google-protobuf";
 
-export class Item extends jspb.Message {
+export class ItemId extends jspb.Message {
   getId(): number;
   setId(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ItemId.AsObject;
+  static toObject(includeInstance: boolean, msg: ItemId): ItemId.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ItemId, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ItemId;
+  static deserializeBinaryFromReader(message: ItemId, reader: jspb.BinaryReader): ItemId;
+}
+
+export namespace ItemId {
+  export type AsObject = {
+    id: number,
+  }
+}
+
+export class Item extends jspb.Message {
+  hasId(): boolean;
+  clearId(): void;
+  getId(): ItemId | undefined;
+  setId(value?: ItemId): void;
+
+  getScore(): number;
+  setScore(value: number): void;
+
+  getTitle(): string;
+  setTitle(value: string): void;
+
+  getBy(): string;
+  setBy(value: string): void;
+
+  getTime(): number;
+  setTime(value: number): void;
+
+  getUrl(): string;
+  setUrl(value: string): void;
+
+  getType(): ItemType;
+  setType(value: ItemType): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Item.AsObject;
@@ -19,15 +59,21 @@ export class Item extends jspb.Message {
 
 export namespace Item {
   export type AsObject = {
-    id: number,
+    id?: ItemId.AsObject,
+    score: number,
+    title: string,
+    by: string,
+    time: number,
+    url: string,
+    type: ItemType,
   }
 }
 
 export class ListStoriesResponse extends jspb.Message {
-  clearStoriesList(): void;
-  getStoriesList(): Array<Item>;
-  setStoriesList(value: Array<Item>): void;
-  addStories(value?: Item, index?: number): Item;
+  hasStory(): boolean;
+  clearStory(): void;
+  getStory(): Item | undefined;
+  setStory(value?: Item): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListStoriesResponse.AsObject;
@@ -41,7 +87,7 @@ export class ListStoriesResponse extends jspb.Message {
 
 export namespace ListStoriesResponse {
   export type AsObject = {
-    storiesList: Array<Item.AsObject>,
+    story?: Item.AsObject,
   }
 }
 
@@ -59,5 +105,14 @@ export class ListStoriesRequest extends jspb.Message {
 export namespace ListStoriesRequest {
   export type AsObject = {
   }
+}
+
+export enum ItemType {
+  UNKNOWN = 0,
+  JOB = 1,
+  STORY = 2,
+  COMMENT = 3,
+  POLL = 4,
+  POLLOPT = 5,
 }
 

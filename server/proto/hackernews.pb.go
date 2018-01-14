@@ -8,6 +8,7 @@ It is generated from these files:
 	proto/hackernews.proto
 
 It has these top-level messages:
+	ItemId
 	Item
 	ListStoriesResponse
 	ListStoriesRequest
@@ -34,34 +35,131 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Item struct {
+type ItemType int32
+
+const (
+	ItemType_UNKNOWN ItemType = 0
+	ItemType_JOB     ItemType = 1
+	ItemType_STORY   ItemType = 2
+	ItemType_COMMENT ItemType = 3
+	ItemType_POLL    ItemType = 4
+	ItemType_POLLOPT ItemType = 5
+)
+
+var ItemType_name = map[int32]string{
+	0: "UNKNOWN",
+	1: "JOB",
+	2: "STORY",
+	3: "COMMENT",
+	4: "POLL",
+	5: "POLLOPT",
+}
+var ItemType_value = map[string]int32{
+	"UNKNOWN": 0,
+	"JOB":     1,
+	"STORY":   2,
+	"COMMENT": 3,
+	"POLL":    4,
+	"POLLOPT": 5,
+}
+
+func (x ItemType) String() string {
+	return proto.EnumName(ItemType_name, int32(x))
+}
+func (ItemType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+type ItemId struct {
 	Id int32 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
 }
 
-func (m *Item) Reset()                    { *m = Item{} }
-func (m *Item) String() string            { return proto.CompactTextString(m) }
-func (*Item) ProtoMessage()               {}
-func (*Item) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *ItemId) Reset()                    { *m = ItemId{} }
+func (m *ItemId) String() string            { return proto.CompactTextString(m) }
+func (*ItemId) ProtoMessage()               {}
+func (*ItemId) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Item) GetId() int32 {
+func (m *ItemId) GetId() int32 {
 	if m != nil {
 		return m.Id
 	}
 	return 0
 }
 
+type Item struct {
+	Id    *ItemId  `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Score int32    `protobuf:"varint,2,opt,name=score" json:"score,omitempty"`
+	Title string   `protobuf:"bytes,3,opt,name=title" json:"title,omitempty"`
+	By    string   `protobuf:"bytes,4,opt,name=by" json:"by,omitempty"`
+	Time  int32    `protobuf:"varint,5,opt,name=time" json:"time,omitempty"`
+	Url   string   `protobuf:"bytes,6,opt,name=url" json:"url,omitempty"`
+	Type  ItemType `protobuf:"varint,7,opt,name=type,enum=grpc_web_hacker_news.ItemType" json:"type,omitempty"`
+}
+
+func (m *Item) Reset()                    { *m = Item{} }
+func (m *Item) String() string            { return proto.CompactTextString(m) }
+func (*Item) ProtoMessage()               {}
+func (*Item) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Item) GetId() *ItemId {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+func (m *Item) GetScore() int32 {
+	if m != nil {
+		return m.Score
+	}
+	return 0
+}
+
+func (m *Item) GetTitle() string {
+	if m != nil {
+		return m.Title
+	}
+	return ""
+}
+
+func (m *Item) GetBy() string {
+	if m != nil {
+		return m.By
+	}
+	return ""
+}
+
+func (m *Item) GetTime() int32 {
+	if m != nil {
+		return m.Time
+	}
+	return 0
+}
+
+func (m *Item) GetUrl() string {
+	if m != nil {
+		return m.Url
+	}
+	return ""
+}
+
+func (m *Item) GetType() ItemType {
+	if m != nil {
+		return m.Type
+	}
+	return ItemType_UNKNOWN
+}
+
 type ListStoriesResponse struct {
-	Stories []*Item `protobuf:"bytes,1,rep,name=stories" json:"stories,omitempty"`
+	Story *Item `protobuf:"bytes,1,opt,name=story" json:"story,omitempty"`
 }
 
 func (m *ListStoriesResponse) Reset()                    { *m = ListStoriesResponse{} }
 func (m *ListStoriesResponse) String() string            { return proto.CompactTextString(m) }
 func (*ListStoriesResponse) ProtoMessage()               {}
-func (*ListStoriesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*ListStoriesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *ListStoriesResponse) GetStories() []*Item {
+func (m *ListStoriesResponse) GetStory() *Item {
 	if m != nil {
-		return m.Stories
+		return m.Story
 	}
 	return nil
 }
@@ -72,12 +170,14 @@ type ListStoriesRequest struct {
 func (m *ListStoriesRequest) Reset()                    { *m = ListStoriesRequest{} }
 func (m *ListStoriesRequest) String() string            { return proto.CompactTextString(m) }
 func (*ListStoriesRequest) ProtoMessage()               {}
-func (*ListStoriesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*ListStoriesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func init() {
+	proto.RegisterType((*ItemId)(nil), "grpc_web_hacker_news.ItemId")
 	proto.RegisterType((*Item)(nil), "grpc_web_hacker_news.Item")
 	proto.RegisterType((*ListStoriesResponse)(nil), "grpc_web_hacker_news.ListStoriesResponse")
 	proto.RegisterType((*ListStoriesRequest)(nil), "grpc_web_hacker_news.ListStoriesRequest")
+	proto.RegisterEnum("grpc_web_hacker_news.ItemType", ItemType_name, ItemType_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -91,7 +191,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for HackerNewsService service
 
 type HackerNewsServiceClient interface {
-	ListStories(ctx context.Context, in *ListStoriesRequest, opts ...grpc.CallOption) (*ListStoriesResponse, error)
+	ListStories(ctx context.Context, in *ListStoriesRequest, opts ...grpc.CallOption) (HackerNewsService_ListStoriesClient, error)
 }
 
 type hackerNewsServiceClient struct {
@@ -102,70 +202,107 @@ func NewHackerNewsServiceClient(cc *grpc.ClientConn) HackerNewsServiceClient {
 	return &hackerNewsServiceClient{cc}
 }
 
-func (c *hackerNewsServiceClient) ListStories(ctx context.Context, in *ListStoriesRequest, opts ...grpc.CallOption) (*ListStoriesResponse, error) {
-	out := new(ListStoriesResponse)
-	err := grpc.Invoke(ctx, "/grpc_web_hacker_news.HackerNewsService/ListStories", in, out, c.cc, opts...)
+func (c *hackerNewsServiceClient) ListStories(ctx context.Context, in *ListStoriesRequest, opts ...grpc.CallOption) (HackerNewsService_ListStoriesClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_HackerNewsService_serviceDesc.Streams[0], c.cc, "/grpc_web_hacker_news.HackerNewsService/ListStories", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &hackerNewsServiceListStoriesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type HackerNewsService_ListStoriesClient interface {
+	Recv() (*ListStoriesResponse, error)
+	grpc.ClientStream
+}
+
+type hackerNewsServiceListStoriesClient struct {
+	grpc.ClientStream
+}
+
+func (x *hackerNewsServiceListStoriesClient) Recv() (*ListStoriesResponse, error) {
+	m := new(ListStoriesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // Server API for HackerNewsService service
 
 type HackerNewsServiceServer interface {
-	ListStories(context.Context, *ListStoriesRequest) (*ListStoriesResponse, error)
+	ListStories(*ListStoriesRequest, HackerNewsService_ListStoriesServer) error
 }
 
 func RegisterHackerNewsServiceServer(s *grpc.Server, srv HackerNewsServiceServer) {
 	s.RegisterService(&_HackerNewsService_serviceDesc, srv)
 }
 
-func _HackerNewsService_ListStories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListStoriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _HackerNewsService_ListStories_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListStoriesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(HackerNewsServiceServer).ListStories(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/grpc_web_hacker_news.HackerNewsService/ListStories",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HackerNewsServiceServer).ListStories(ctx, req.(*ListStoriesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(HackerNewsServiceServer).ListStories(m, &hackerNewsServiceListStoriesServer{stream})
+}
+
+type HackerNewsService_ListStoriesServer interface {
+	Send(*ListStoriesResponse) error
+	grpc.ServerStream
+}
+
+type hackerNewsServiceListStoriesServer struct {
+	grpc.ServerStream
+}
+
+func (x *hackerNewsServiceListStoriesServer) Send(m *ListStoriesResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 var _HackerNewsService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc_web_hacker_news.HackerNewsService",
 	HandlerType: (*HackerNewsServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "ListStories",
-			Handler:    _HackerNewsService_ListStories_Handler,
+			StreamName:    "ListStories",
+			Handler:       _HackerNewsService_ListStories_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/hackernews.proto",
 }
 
 func init() { proto.RegisterFile("proto/hackernews.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 186 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2b, 0x28, 0xca, 0x2f,
-	0xc9, 0xd7, 0xcf, 0x48, 0x4c, 0xce, 0x4e, 0x2d, 0xca, 0x4b, 0x2d, 0x2f, 0xd6, 0x03, 0x0b, 0x08,
-	0x89, 0xa4, 0x17, 0x15, 0x24, 0xc7, 0x97, 0xa7, 0x26, 0xc5, 0x43, 0xa4, 0xe2, 0x41, 0x72, 0x4a,
-	0x62, 0x5c, 0x2c, 0x9e, 0x25, 0xa9, 0xb9, 0x42, 0x7c, 0x5c, 0x4c, 0x99, 0x29, 0x12, 0x8c, 0x0a,
-	0x8c, 0x1a, 0xac, 0x41, 0x4c, 0x99, 0x29, 0x4a, 0xde, 0x5c, 0xc2, 0x3e, 0x99, 0xc5, 0x25, 0xc1,
-	0x25, 0xf9, 0x45, 0x99, 0xa9, 0xc5, 0x41, 0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0x26,
-	0x5c, 0xec, 0xc5, 0x10, 0x21, 0x09, 0x46, 0x05, 0x66, 0x0d, 0x6e, 0x23, 0x29, 0x3d, 0x6c, 0xc6,
-	0xea, 0x81, 0xcc, 0x0c, 0x82, 0x29, 0x55, 0x12, 0xe1, 0x12, 0x42, 0x31, 0xac, 0xb0, 0x34, 0xb5,
-	0xb8, 0xc4, 0xa8, 0x9c, 0x4b, 0xd0, 0x03, 0xac, 0xc5, 0x2f, 0xb5, 0xbc, 0x38, 0x38, 0xb5, 0xa8,
-	0x2c, 0x33, 0x39, 0x55, 0x28, 0x89, 0x8b, 0x1b, 0x49, 0xa9, 0x90, 0x06, 0x76, 0xe3, 0x31, 0x4d,
-	0x93, 0xd2, 0x24, 0x42, 0x25, 0xc4, 0x13, 0x49, 0x6c, 0xe0, 0x00, 0x31, 0x06, 0x04, 0x00, 0x00,
-	0xff, 0xff, 0x7a, 0x2e, 0x50, 0x56, 0x2a, 0x01, 0x00, 0x00,
+	// 350 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xed, 0x6a, 0xdb, 0x40,
+	0x10, 0xac, 0xbe, 0xfc, 0xb1, 0x06, 0xa3, 0x6e, 0x4d, 0x39, 0x4c, 0x29, 0x46, 0xbf, 0xd4, 0x52,
+	0x5c, 0xa3, 0xbe, 0x41, 0x4b, 0x69, 0x9d, 0xd8, 0x92, 0x91, 0x15, 0x42, 0x7e, 0x99, 0x48, 0x5a,
+	0x12, 0x11, 0xdb, 0x52, 0xee, 0xce, 0x31, 0x7a, 0xc5, 0x3c, 0x55, 0xb8, 0x53, 0x12, 0x12, 0x62,
+	0x43, 0xfe, 0xed, 0xce, 0xcc, 0xce, 0x8c, 0xc4, 0xc1, 0xe7, 0x8a, 0x97, 0xb2, 0xfc, 0x79, 0x7d,
+	0x99, 0xdd, 0x10, 0xdf, 0xd2, 0x5e, 0x8c, 0x35, 0x80, 0x83, 0x2b, 0x5e, 0x65, 0xab, 0x3d, 0xa5,
+	0xab, 0x86, 0x5a, 0x29, 0xce, 0x63, 0xd0, 0x9a, 0x4a, 0xda, 0x4c, 0x73, 0xec, 0x83, 0x59, 0xe4,
+	0xcc, 0x18, 0x19, 0xbe, 0x13, 0x9b, 0x45, 0xee, 0xdd, 0x1b, 0x60, 0x2b, 0x0a, 0x7f, 0x3c, 0x13,
+	0xbd, 0xe0, 0xcb, 0xf8, 0x90, 0xcb, 0xb8, 0xb1, 0x50, 0x67, 0x38, 0x00, 0x47, 0x64, 0x25, 0x27,
+	0x66, 0x6a, 0xa7, 0x66, 0x51, 0xa8, 0x2c, 0xe4, 0x9a, 0x98, 0x35, 0x32, 0xfc, 0x6e, 0xdc, 0x2c,
+	0x2a, 0x32, 0xad, 0x99, 0xad, 0x21, 0x33, 0xad, 0x11, 0xc1, 0x96, 0xc5, 0x86, 0x98, 0xa3, 0x4f,
+	0xf5, 0x8c, 0x2e, 0x58, 0x3b, 0xbe, 0x66, 0x2d, 0x2d, 0x52, 0x23, 0x06, 0x60, 0xcb, 0xba, 0x22,
+	0xd6, 0x1e, 0x19, 0x7e, 0x3f, 0xf8, 0x7a, 0xbc, 0x51, 0x52, 0x57, 0x14, 0x6b, 0xad, 0xf7, 0x0f,
+	0x3e, 0xcd, 0x0a, 0x21, 0x97, 0xb2, 0xe4, 0x05, 0x89, 0x98, 0x44, 0x55, 0x6e, 0x05, 0xe1, 0x04,
+	0x1c, 0x21, 0x4b, 0x5e, 0x3f, 0x7e, 0xdd, 0xf0, 0xb8, 0x57, 0xdc, 0x08, 0xbd, 0x01, 0xe0, 0x2b,
+	0xa3, 0xdb, 0x1d, 0x09, 0xf9, 0x3d, 0x82, 0xce, 0x53, 0x20, 0xf6, 0xa0, 0x7d, 0x16, 0x9e, 0x86,
+	0xd1, 0x79, 0xe8, 0x7e, 0xc0, 0x36, 0x58, 0x27, 0xd1, 0x6f, 0xd7, 0xc0, 0x2e, 0x38, 0xcb, 0x24,
+	0x8a, 0x2f, 0x5c, 0x53, 0x09, 0xfe, 0x44, 0xf3, 0xf9, 0xdf, 0x30, 0x71, 0x2d, 0xec, 0x80, 0xbd,
+	0x88, 0x66, 0x33, 0xd7, 0x56, 0xb0, 0x9a, 0xa2, 0x45, 0xe2, 0x3a, 0x41, 0x0d, 0x1f, 0xff, 0xeb,
+	0x06, 0x21, 0xed, 0xc5, 0x92, 0xf8, 0x5d, 0x91, 0x11, 0xe6, 0xd0, 0x7b, 0x91, 0x8d, 0xfe, 0xe1,
+	0xb6, 0x6f, 0xeb, 0x0d, 0xbf, 0xbd, 0x43, 0xd9, 0xfc, 0x91, 0x89, 0x91, 0xb6, 0xf4, 0x73, 0xf9,
+	0xf5, 0x10, 0x00, 0x00, 0xff, 0xff, 0x4b, 0xb4, 0x6b, 0x10, 0x48, 0x02, 0x00, 0x00,
 }

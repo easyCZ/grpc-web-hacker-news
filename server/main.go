@@ -14,7 +14,7 @@ func main() {
 	router := chi.NewRouter()
 
 	grpcServer := grpc.NewServer()
-	hackernewsService := hackernews.New()
+	hackernewsService := hackernews.NewHackerNewsService(nil)
 	hackernews_pb.RegisterHackerNewsServiceServer(grpcServer, hackernewsService)
 
 	wrappedGrpc := grpcweb.WrapServer(grpcServer)

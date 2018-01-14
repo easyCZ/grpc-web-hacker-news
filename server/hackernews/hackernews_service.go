@@ -1,22 +1,29 @@
 package hackernews
 
 import (
-	"golang.org/x/net/context"
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
 )
 
-type hackerNewsService struct{}
-
-func New() *hackerNewsService {
-	return &hackerNewsService{}
+type hackerNewsService struct {
+	api *hackerNewsApi
 }
 
-func (s *hackerNewsService) ListStories(ctx context.Context, request *hackernews_pb.ListStoriesRequest) (*hackernews_pb.ListStoriesResponse, error) {
-	var stories []*hackernews_pb.Item
-	for i := 0; i < 10; i++ {
-		stories = append(stories, &hackernews_pb.Item{Id: int32(i)})
+func NewHackerNewsService(api *hackerNewsApi) *hackerNewsService {
+	if api == nil {
+		api = NewHackerNewsApi(nil)
 	}
-	return &hackernews_pb.ListStoriesResponse{
-		Stories: stories,
-	}, nil
+	return &hackerNewsService{api}
+}
+
+func (s *hackerNewsService) ListStories(req *hackernews_pb.ListStoriesRequest, resp hackernews_pb.HackerNewsService_ListStoriesServer) error {
+	stories := make(chan *hackernews_pb.Item)
+	defer close(stories)
+	s.api.TopStories(stories)
+	for story := range stories {
+		resp.Send(&hackernews_pb.ListStoriesResponse{
+			Story: story,
+		})
+	}
+
+	return nil
 }

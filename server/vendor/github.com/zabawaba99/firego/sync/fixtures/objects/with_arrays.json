@@ -1,0 +1,19 @@
+{
+  "regular": "item",
+  "booleans": [
+    false,
+    true
+  ],
+  "numbers": [
+    1,
+    2
+  ],
+  "decimals": [
+    1.1,
+    2.2
+  ],
+  "strings": [
+    "foo",
+    "bar"
+  ]
+}
