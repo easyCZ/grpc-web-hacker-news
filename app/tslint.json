@@ -2,7 +2,7 @@
     "extends": ["tslint-react"],
     "linterOptions": {
         "exclude": [
-            "src/proto/*"
+            "proto/*"
         ]
     },
     "rules": {

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import './App.css';
 import { grpc } from 'grpc-web-client';
-import { HackerNewsService } from './proto/hackernews_pb_service';
-import { ListStoriesRequest, ListStoriesResponse } from './proto/hackernews_pb';
+import { HackerNewsService } from '../proto/hackernews_pb_service';
+import { ListStoriesRequest, ListStoriesResponse } from '../proto/hackernews_pb';
 
 const logo = require('./logo.svg');
 
