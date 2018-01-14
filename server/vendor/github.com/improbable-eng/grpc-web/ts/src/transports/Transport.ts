@@ -1,8 +1,8 @@
-import {BrowserHeaders} from "browser-headers";
+import {Metadata} from "../grpc";
 import fetchRequest from "./fetch";
 import xhrRequest from "./xhr";
-import msStreamRequest from "./msStream";
 import mozXhrRequest from "./mozXhr";
+import httpNodeTransport from "./nodeHttp";
 
 declare const Response: any;
 declare const Headers: any;
@@ -10,20 +10,23 @@ declare const Headers: any;
 export {
   fetchRequest,
   mozXhrRequest,
-  msStreamRequest,
   xhrRequest
 }
 
+export interface CancelFunc {
+  (): void
+}
+
 export interface Transport {
-  (options: TransportOptions): void;
+  (options: TransportOptions): CancelFunc;
 }
 
 export type TransportOptions = {
   debug: boolean,
   url: string,
-  headers: BrowserHeaders,
+  headers: Metadata,
   body: ArrayBufferView,
-  onHeaders: (headers: BrowserHeaders, status: number) => void,
+  onHeaders: (headers: Metadata, status: number) => void,
   onChunk: (chunkBytes: Uint8Array, flush?: boolean) => void,
   onEnd: (err?: Error) => void,
 }
@@ -67,16 +70,18 @@ export class DefaultTransportFactory {
       return fetchRequest;
     }
 
-    if (xhrSupportsResponseType("moz-chunked-arraybuffer")) {
-      return mozXhrRequest;
+    if (typeof XMLHttpRequest !== "undefined") {
+      if (xhrSupportsResponseType("moz-chunked-arraybuffer")) {
+        return mozXhrRequest;
+      }
+
+      if (XMLHttpRequest.prototype.hasOwnProperty("overrideMimeType")) {
+        return xhrRequest;
+      }
     }
 
-    if (XMLHttpRequest.prototype.hasOwnProperty("overrideMimeType")) {
-      return xhrRequest;
-    }
-
-    if (xhrSupportsResponseType("ms-stream")) {
-      return msStreamRequest;
+    if (typeof module !== "undefined" && module.exports) {
+      return httpNodeTransport;
     }
 
     throw new Error("No suitable transport found for gRPC-Web");

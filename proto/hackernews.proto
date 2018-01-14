@@ -3,7 +3,7 @@ syntax = "proto3";
 package grpc_web_hacker_news;
 
 message Item {
-    string id = 1;
+    int32 id = 1;
 }
 
 service HackerNewsService {

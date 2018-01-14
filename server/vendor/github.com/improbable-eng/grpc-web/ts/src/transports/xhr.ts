@@ -1,10 +1,11 @@
-import {BrowserHeaders} from "browser-headers";
-import {TransportOptions} from "./Transport";
+import {Metadata} from "../grpc";
+import {CancelFunc, TransportOptions} from "./Transport";
 import {debug} from "../debug";
+import detach from "../detach";
 
 /* xhrRequest uses XmlHttpRequest with overrideMimeType combined with a byte decoding method that decodes the UTF-8
  * text response to bytes. */
-export default function xhrRequest(options: TransportOptions) {
+export default function xhrRequest(options: TransportOptions): CancelFunc {
   options.debug && debug("xhrRequest", options);
   const xhr = new XMLHttpRequest();
   let index = 0;
@@ -14,18 +15,24 @@ export default function xhrRequest(options: TransportOptions) {
     const rawText = xhr.response.substr(index);
     index = xhr.response.length;
     const asArrayBuffer = stringToArrayBuffer(rawText);
-    options.onChunk(asArrayBuffer);
+    detach(() => {
+      options.onChunk(asArrayBuffer);
+    });
   }
 
   function onLoadEvent() {
     options.debug && debug("xhrRequest.onLoadEvent");
-    options.onEnd();
+    detach(() => {
+      options.onEnd();
+    });
   }
 
   function onStateChange() {
     options.debug && debug("xhrRequest.onStateChange", this.readyState);
     if (this.readyState === this.HEADERS_RECEIVED) {
-      options.onHeaders(new BrowserHeaders(this.getAllResponseHeaders()), this.status);
+      detach(() => {
+        options.onHeaders(new Metadata(this.getAllResponseHeaders()), this.status);
+      });
     }
   }
 
@@ -43,9 +50,15 @@ export default function xhrRequest(options: TransportOptions) {
   xhr.addEventListener("loadend", onLoadEvent);
   xhr.addEventListener("error", (err: ErrorEvent) => {
     options.debug && debug("xhrRequest.error", err);
-    options.onEnd(err.error);
+    detach(() => {
+      options.onEnd(err.error);
+    });
   });
   xhr.send(options.body);
+  return () => {
+    options.debug && debug("xhrRequest.abort");
+    xhr.abort();
+  }
 }
 
 function codePointAtPolyfill(str: string, index: number) {

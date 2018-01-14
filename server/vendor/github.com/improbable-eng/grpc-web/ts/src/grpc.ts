@@ -1,39 +1,27 @@
 import * as jspb from "google-protobuf";
-import {BrowserHeaders} from "browser-headers";
+import {BrowserHeaders as Metadata} from "browser-headers";
 import {ChunkParser, Chunk, ChunkType} from "./ChunkParser";
-import {Transport,DefaultTransportFactory} from "./transports/Transport";
+import {Transport, TransportOptions, DefaultTransportFactory} from "./transports/Transport";
 import {debug} from "./debug";
+import detach from "./detach";
+import {Code} from "./Code";
 
 export {
-  BrowserHeaders,
-  Transport
+  Metadata,
+  Transport,
+  TransportOptions,
+  Code,
 };
+
+export type Request = {
+  abort: () => void
+}
 
 export namespace grpc {
 
   export interface ProtobufMessageClass<T extends jspb.Message> {
     new(): T;
     deserializeBinary(bytes: Uint8Array): T;
-  }
-
-  export enum Code {
-    OK = 0,
-    Canceled = 1,
-    Unknown = 2,
-    InvalidArgument = 3,
-    DeadlineExceeded = 4,
-    NotFound = 5,
-    AlreadyExists = 6,
-    PermissionDenied = 7,
-    ResourceExhausted = 8,
-    FailedPrecondition = 9,
-    Aborted = 10,
-    OutOfRange = 11,
-    Unimplemented = 12,
-    Internal = 13,
-    Unavailable = 14,
-    DataLoss = 15,
-    Unauthenticated = 16,
   }
 
   function httpStatusToCode(httpStatus: number): Code {
@@ -84,17 +72,17 @@ export namespace grpc {
     responseType: ProtobufMessageClass<TResponse>;
   }
 
-  export interface UnaryMethodDefinition<TRequest extends jspb.Message, TResponse extends jspb.Message> extends MethodDefinition<TRequest, TResponse> {
+  export type UnaryMethodDefinition<TRequest extends jspb.Message, TResponse extends jspb.Message> = MethodDefinition<TRequest, TResponse> & {
     responseStream: false;
   }
 
   export type RpcOptions<TRequest extends jspb.Message, TResponse extends jspb.Message> = {
     host: string,
     request: TRequest,
-    metadata?: BrowserHeaders.ConstructorArg,
-    onHeaders?: (headers: BrowserHeaders) => void,
+    metadata?: Metadata.ConstructorArg,
+    onHeaders?: (headers: Metadata) => void,
     onMessage?: (res: TResponse) => void,
-    onEnd: (code: Code, message: string, trailers: BrowserHeaders) => void,
+    onEnd: (code: Code, message: string, trailers: Metadata) => void,
     transport?: Transport,
     debug?: boolean,
   }
@@ -102,15 +90,15 @@ export namespace grpc {
   export type UnaryOutput<TResponse> = {
     status: Code,
     statusMessage: string;
-    headers: BrowserHeaders;
+    headers: Metadata;
     message: TResponse | null;
-    trailers: BrowserHeaders;
+    trailers: Metadata;
   }
 
   export type UnaryRpcOptions<M extends UnaryMethodDefinition<TRequest, TResponse>, TRequest extends jspb.Message, TResponse extends jspb.Message> = {
     host: string,
     request: TRequest,
-    metadata?: BrowserHeaders.ConstructorArg,
+    metadata?: Metadata.ConstructorArg,
     onEnd: (output: UnaryOutput<TResponse>) => void,
     transport?: Transport,
     debug?: boolean,
@@ -124,7 +112,7 @@ export namespace grpc {
     return new Uint8Array(frame);
   }
 
-  function getStatusFromHeaders(headers: BrowserHeaders): Code | null {
+  function getStatusFromHeaders(headers: Metadata): Code | null {
     const fromHeaders = headers.get("grpc-status") || [];
     if (fromHeaders.length > 0) {
       try {
@@ -137,27 +125,27 @@ export namespace grpc {
     return null;
   }
 
-  export function unary<TRequest extends jspb.Message, TResponse extends jspb.Message, M extends UnaryMethodDefinition<TRequest, TResponse>>(methodDescriptor: M, props: UnaryRpcOptions<M, TRequest, TResponse>) {
+  export function unary<TRequest extends jspb.Message, TResponse extends jspb.Message, M extends UnaryMethodDefinition<TRequest, TResponse>>(methodDescriptor: M, props: UnaryRpcOptions<M, TRequest, TResponse>): Request {
     if (methodDescriptor.responseStream) {
       throw new Error(".unary cannot be used with server-streaming methods. Use .invoke instead.");
     }
-    let responseHeaders: BrowserHeaders | null = null;
+    let responseHeaders: Metadata | null = null;
     let responseMessage: TResponse | null = null;
     const rpcOpts: RpcOptions<TRequest, TResponse> = {
       host: props.host,
       request: props.request,
       metadata: props.metadata,
-      onHeaders: (headers: BrowserHeaders) => {
+      onHeaders: (headers: Metadata) => {
         responseHeaders = headers;
       },
       onMessage: (res: TResponse) => {
         responseMessage = res;
       },
-      onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+      onEnd: (status: Code, statusMessage: string, trailers: Metadata) => {
         props.onEnd({
           status: status,
           statusMessage: statusMessage,
-          headers: responseHeaders ? responseHeaders : new BrowserHeaders(),
+          headers: responseHeaders ? responseHeaders : new Metadata(),
           message: responseMessage,
           trailers: trailers
         });
@@ -165,45 +153,54 @@ export namespace grpc {
       transport: props.transport,
       debug: props.debug,
     };
-    grpc.invoke(methodDescriptor, rpcOpts);
+    return grpc.invoke(methodDescriptor, rpcOpts);
   }
 
-  export function invoke<TRequest extends jspb.Message, TResponse extends jspb.Message, M extends MethodDefinition<TRequest, TResponse>>(methodDescriptor: M, props: RpcOptions<TRequest, TResponse>) {
-    const requestHeaders = new BrowserHeaders(props.metadata ? props.metadata : {});
-    requestHeaders.set("content-type", "application/grpc-web");
+  export function invoke<TRequest extends jspb.Message, TResponse extends jspb.Message, M extends MethodDefinition<TRequest, TResponse>>(methodDescriptor: M, props: RpcOptions<TRequest, TResponse>): Request {
+    const requestHeaders = new Metadata(props.metadata ? props.metadata : {});
+    requestHeaders.set("content-type", "application/grpc-web+proto");
     requestHeaders.set("x-grpc-web", "1"); // Required for CORS handling
 
     const framedRequest = frameRequest(props.request);
 
     let completed = false;
-    function rawOnEnd(code: Code, message: string, trailers: BrowserHeaders) {
+    function rawOnEnd(code: Code, message: string, trailers: Metadata) {
       if (completed) return;
       completed = true;
-      props.onEnd(code, message, trailers);
+      detach(() => {
+        props.onEnd(code, message, trailers);
+      });
     }
 
-    function rawOnHeaders(headers: BrowserHeaders) {
+    function rawOnHeaders(headers: Metadata) {
       if (completed) return;
-      if (props.onHeaders) {
-        props.onHeaders(headers);
-      }
+      detach(() => {
+        if (props.onHeaders) {
+          props.onHeaders(headers);
+        }
+      });
     }
 
     function rawOnError(code: Code, msg: string) {
       if (completed) return;
       completed = true;
-      props.onEnd(code, msg, new BrowserHeaders());
+      detach(() => {
+        props.onEnd(code, msg, new Metadata());
+      });
     }
 
     function rawOnMessage(res: TResponse) {
       if (completed) return;
-      if (props.onMessage) {
-        props.onMessage(res);
-      }
+      detach(() => {
+        if (props.onMessage) {
+          props.onMessage(res);
+        }
+      });
     }
 
-    let responseHeaders: BrowserHeaders;
-    let responseTrailers: BrowserHeaders;
+    let aborted = false;
+    let responseHeaders: Metadata;
+    let responseTrailers: Metadata;
     const parser = new ChunkParser();
 
 
@@ -211,13 +208,19 @@ export namespace grpc {
     if (!transport) {
       transport = DefaultTransportFactory.getTransport();
     }
-    transport({
+    const cancelFunc = transport({
       debug: props.debug || false,
       url: `${props.host}/${methodDescriptor.service.serviceName}/${methodDescriptor.methodName}`,
       headers: requestHeaders,
       body: framedRequest,
-      onHeaders: (headers: BrowserHeaders, status: number) => {
+      onHeaders: (headers: Metadata, status: number) => {
         props.debug && debug("onHeaders", headers, status);
+
+        if (aborted) {
+          props.debug && debug("grpc.onHeaders received after request was aborted - ignoring");
+          return;
+        }
+
         if (status === 0) {
           // The request has failed due to connectivity issues. Do not capture the headers
         } else {
@@ -236,6 +239,11 @@ export namespace grpc {
         }
       },
       onChunk: (chunkBytes: Uint8Array) => {
+        if (aborted) {
+          props.debug && debug("grpc.onChunk received after request was aborted - ignoring");
+          return;
+        }
+
         let data: Chunk[] = [];
         try {
           data = parser.parse(chunkBytes);
@@ -250,13 +258,18 @@ export namespace grpc {
             const deserialized = methodDescriptor.responseType.deserializeBinary(d.data!);
             rawOnMessage(deserialized);
           } else if (d.chunkType === ChunkType.TRAILERS) {
+            responseTrailers = new Metadata(d.trailers);
             props.debug && debug("onChunk.trailers", responseTrailers);
-            responseTrailers = new BrowserHeaders(d.trailers);
           }
         });
       },
       onEnd: () => {
         props.debug && debug("grpc.onEnd");
+
+        if (aborted) {
+          props.debug && debug("grpc.onEnd received after request was aborted - ignoring");
+          return;
+        }
 
         if (responseTrailers === undefined) {
           if (responseHeaders === undefined) {
@@ -292,5 +305,18 @@ export namespace grpc {
         rawOnEnd(grpcStatus, grpcMessage[0], responseTrailers);
       }
     });
+
+    const requestObj = {
+      abort() {
+        if (!aborted) {
+          aborted = true;
+          props.debug && debug("request.abort aborting request");
+          cancelFunc();
+        }
+
+      }
+    };
+
+    return requestObj;
   }
 }

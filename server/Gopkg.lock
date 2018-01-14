@@ -16,8 +16,7 @@
 [[projects]]
   name = "github.com/improbable-eng/grpc-web"
   packages = ["go/grpcweb"]
-  revision = "7174732598544bdecfa12fb81ca2f1601cf1b587"
-  version = "0.3.0-beta"
+  revision = "e78ac9489c846d8b3c5b09d2d7e6058667219773"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -52,6 +51,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b7e4c97654026dcbb88bae14b20a41edbfb7049cbc239cccc325a8d3995cc184"
+  inputs-digest = "457bc5f5a6f99d022e9bfd70b7d8cc56117549cb7f15c17e6eee59e108dd53ff"
   solver-name = "gps-cdcl"
   solver-version = 1

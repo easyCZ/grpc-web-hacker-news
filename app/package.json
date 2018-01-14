@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "google-protobuf": "^3.5.0",
+    "grpc-web-client": "^0.3.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-scripts-ts": "2.10.0"
@@ -14,9 +16,11 @@
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
+    "@types/google-protobuf": "^3.2.7",
     "@types/jest": "^22.0.1",
     "@types/node": "^9.3.0",
     "@types/react": "^16.0.34",
-    "@types/react-dom": "^16.0.3"
+    "@types/react-dom": "^16.0.3",
+    "ts-protoc-gen": "^0.4.0"
   }
 }

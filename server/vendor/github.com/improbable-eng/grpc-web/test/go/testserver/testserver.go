@@ -14,15 +14,17 @@ import (
 	testproto "github.com/improbable-eng/grpc-web/test/go/_proto/improbable/grpcweb/test"
 	google_protobuf "github.com/golang/protobuf/ptypes/empty"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/codes"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/transport"
+	"crypto/tls"
+	"sync"
 )
 
 var (
-	http1Port       = flag.Int("http1_port", 9090, "Port to listen with HTTP1.1 on.")
-	http1EmptyPort  = flag.Int("http1_empty_port", 9095, "Port to listen with HTTP1.1 on with a grpc server that has no services.")
+	http1Port       = flag.Int("http1_port", 9090, "Port to listen with HTTP1.1 with TLS on.")
+	http1EmptyPort  = flag.Int("http1_empty_port", 9095, "Port to listen with HTTP1.1 with TLS on with a grpc server that has no services.")
 	http2Port       = flag.Int("http2_port", 9100, "Port to listen with HTTP2 with TLS on.")
 	http2EmptyPort  = flag.Int("http2_empty_port", 9105, "Port to listen with HTTP2 with TLS on with a grpc server that has no services.")
 	tlsCertFilePath = flag.String("tls_cert_file", "../../../misc/localhost.crt", "Path to the CRT/PEM file.")
@@ -33,30 +35,38 @@ func main() {
 	flag.Parse()
 
 	grpcServer := grpc.NewServer()
-	testproto.RegisterTestServiceServer(grpcServer, &testSrv{})
+	testServer := &testSrv{
+		streamsMutex: &sync.Mutex{},
+		streams:      map[string]chan bool{},
+	}
+	testproto.RegisterTestServiceServer(grpcServer, testServer)
+	testproto.RegisterTestUtilServiceServer(grpcServer, testServer)
 	grpclog.SetLogger(log.New(os.Stdout, "testserver: ", log.LstdFlags))
 
 	wrappedServer := grpcweb.WrapServer(grpcServer)
 	handler := func(resp http.ResponseWriter, req *http.Request) {
-		wrappedServer.ServeHttp(resp, req)
+		wrappedServer.ServeHTTP(resp, req)
 	}
 
 	emptyGrpcServer := grpc.NewServer()
 	emptyWrappedServer := grpcweb.WrapServer(emptyGrpcServer, grpcweb.WithCorsForRegisteredEndpointsOnly(false))
 	emptyHandler := func(resp http.ResponseWriter, req *http.Request) {
-		emptyWrappedServer.ServeHttp(resp, req)
+		emptyWrappedServer.ServeHTTP(resp, req)
 	}
 
 	http1Server := http.Server{
 		Addr:    fmt.Sprintf(":%d", *http1Port),
 		Handler: http.HandlerFunc(handler),
 	}
+	http1Server.TLSNextProto = map[string]func(*http.Server, *tls.Conn, http.Handler){}// Disable HTTP2
 	http1EmptyServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", *http1EmptyPort),
+		Addr: fmt.Sprintf(":%d", *http1EmptyPort),
 		Handler: http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			emptyHandler(res, req)
 		}),
 	}
+	http1EmptyServer.TLSNextProto = map[string]func(*http.Server, *tls.Conn, http.Handler){}// Disable HTTP2
+
 	http2Server := http.Server{
 		Addr:    fmt.Sprintf(":%d", *http2Port),
 		Handler: http.HandlerFunc(handler),
@@ -70,14 +80,14 @@ func main() {
 
 	// Start the empty Http1.1 server
 	go func() {
-		if err := http1EmptyServer.ListenAndServe(); err != nil {
+		if err := http1EmptyServer.ListenAndServeTLS(*tlsCertFilePath, *tlsKeyFilePath); err != nil {
 			grpclog.Fatalf("failed starting http1.1 empty server: %v", err)
 		}
 	}()
 
 	// Start the Http1.1 server
 	go func() {
-		if err := http1Server.ListenAndServe(); err != nil {
+		if err := http1Server.ListenAndServeTLS(*tlsCertFilePath, *tlsKeyFilePath); err != nil {
 			grpclog.Fatalf("failed starting http1.1 server: %v", err)
 		}
 	}()
@@ -96,6 +106,8 @@ func main() {
 }
 
 type testSrv struct {
+	streamsMutex *sync.Mutex
+	streams      map[string]chan bool
 }
 
 func (s *testSrv) PingEmpty(ctx context.Context, _ *google_protobuf.Empty) (*testproto.PingResponse, error) {
@@ -106,7 +118,7 @@ func (s *testSrv) PingEmpty(ctx context.Context, _ *google_protobuf.Empty) (*tes
 
 func (s *testSrv) Ping(ctx context.Context, ping *testproto.PingRequest) (*testproto.PingResponse, error) {
 	if ping.GetCheckMetadata() {
-		md, ok := metadata.FromContext(ctx)
+		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok || md["headertestkey1"][0] != "ClientValue1" {
 			return nil, grpc.Errorf(codes.InvalidArgument, "Metadata was invalid")
 		}
@@ -136,6 +148,31 @@ func (s *testSrv) PingError(ctx context.Context, ping *testproto.PingRequest) (*
 	return nil, grpc.Errorf(codes.Code(ping.ErrorCodeReturned), "Intentionally returning error for PingError")
 }
 
+func (s *testSrv) ContinueStream(ctx context.Context, req *testproto.ContinueStreamRequest) (*google_protobuf.Empty, error) {
+	s.streamsMutex.Lock()
+	defer s.streamsMutex.Unlock()
+	channel, ok := s.streams[req.GetStreamIdentifier()]
+	if !ok {
+		return nil, grpc.Errorf(codes.NotFound, "stream identifier not found")
+	}
+	channel <- true
+	return &google_protobuf.Empty{}, nil
+}
+
+func (s *testSrv) CheckStreamClosed(ctx context.Context, req *testproto.CheckStreamClosedRequest) (*testproto.CheckStreamClosedResponse, error) {
+	s.streamsMutex.Lock()
+	defer s.streamsMutex.Unlock()
+	_, ok := s.streams[req.GetStreamIdentifier()]
+	if !ok {
+		return &testproto.CheckStreamClosedResponse{
+			Closed: true,
+		}, nil
+	}
+	return &testproto.CheckStreamClosedResponse{
+		Closed: false,
+	}, nil
+}
+
 func (s *testSrv) PingList(ping *testproto.PingRequest, stream testproto.TestService_PingListServer) error {
 	if (ping.GetSendHeaders()) {
 		stream.SendHeader(metadata.Pairs("HeaderTestKey1", "ServerValue1", "HeaderTestKey2", "ServerValue2"))
@@ -147,10 +184,47 @@ func (s *testSrv) PingList(ping *testproto.PingRequest, stream testproto.TestSer
 		t, _ := transport.StreamFromContext(stream.Context())
 		t.ServerTransport().Close()
 		return nil
-
 	}
+
+	var channel chan bool
+	useChannel := ping.GetStreamIdentifier() != ""
+	if useChannel {
+		channel = make(chan bool)
+		s.streamsMutex.Lock()
+		s.streams[ping.GetStreamIdentifier()] = channel
+		s.streamsMutex.Unlock()
+
+		defer func() {
+			// When this stream has ended
+			s.streamsMutex.Lock()
+			delete(s.streams, ping.GetStreamIdentifier())
+			close(channel)
+			s.streamsMutex.Unlock()
+		}()
+	}
+
 	for i := int32(0); i < ping.ResponseCount; i++ {
+		if i != 0 && useChannel {
+			shouldContinue := <- channel
+			if !shouldContinue {
+				return grpc.Errorf(codes.OK, "stream was cancelled by side-channel")
+			}
+		}
+		err := stream.Context().Err()
+		if err != nil {
+			return grpc.Errorf(codes.Canceled, "client cancelled stream")
+		}
 		stream.Send(&testproto.PingResponse{Value: fmt.Sprintf("%s %d", ping.Value, i), Counter: i})
+
+		// Flush the stream
+		lowLevelServerStream, ok := transport.StreamFromContext(stream.Context())
+		if !ok {
+			return grpc.Errorf(codes.Internal, "lowLevelServerStream does not exist in context")
+		}
+		zeroBytes := make([]byte,0)
+		lowLevelServerStream.ServerTransport().Write(lowLevelServerStream, zeroBytes, zeroBytes, &transport.Options{
+			Delay: false,
+		})
 	}
 	return nil
 }

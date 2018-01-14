@@ -1,43 +1,65 @@
 // Polyfills
-import {FailService, TestService} from "../_proto/improbable/grpcweb/test/test_pb_service";
+import {debug} from "../../../ts/src/debug";
+
+const global = Function('return this')();
+
 if (typeof Uint8Array === "undefined") {
-  (window as any).Uint8Array = require("typedarray").Uint8Array;
+  (global as any).Uint8Array = require("typedarray").Uint8Array;
 }
 if (typeof ArrayBuffer === "undefined") {
-  (window as any).ArrayBuffer = require("typedarray").ArrayBuffer;
+  (global as any).ArrayBuffer = require("typedarray").ArrayBuffer;
 }
 if (typeof DataView === "undefined") {
-  (window as any).DataView = require("typedarray").DataView;
-}
-if (typeof TextDecoder === "undefined") {
-  (window as any).TextDecoder = require("text-encoding").TextDecoder;
+  (global as any).DataView = require("typedarray").DataView;
 }
 
+// Test Config
+import {assert} from "chai";
+import {
+  testHost,
+  corsHost
+} from "../../hosts-config";
+type TestConfig = {
+  testHostUrl: string,
+  corsHostUrl: string,
+  unavailableHost: string,
+  emptyHost: string,
+}
+const http1Config: TestConfig = {
+  testHostUrl: `https://${testHost}:9100`,
+  corsHostUrl: `https://${corsHost}:9100`,
+  unavailableHost: `https://${testHost}:9999`,
+  emptyHost: `https://${corsHost}:9105`,
+};
+const http2Config: TestConfig = {
+  testHostUrl: `https://${testHost}:9090`,
+  corsHostUrl: `https://${corsHost}:9090`,
+  unavailableHost: `https://${testHost}:9999`,
+  emptyHost: `https://${corsHost}:9095`,
+};
+const DEBUG: boolean = (global as any).DEBUG;
+
+// gRPC-Web library
 import {
   grpc,
+  Code,
+  Request,
   BrowserHeaders,
 } from "../../../ts/src/index";
-import Code = grpc.Code;
 import UnaryMethodDefinition = grpc.UnaryMethodDefinition;
+
+// Generated Test Classes
 import {
   Empty,
 } from "google-protobuf/google/protobuf/empty_pb";
 import {
+  CheckStreamClosedRequest, CheckStreamClosedResponse,
+  ContinueStreamRequest,
   PingRequest,
   PingResponse,
 } from "../_proto/improbable/grpcweb/test/test_pb";
-const {
-  validHost,
-  invalidHost
-} = require("../../hosts-config");
-import {assert} from "chai";
-
-const DEBUG: boolean = (window as any).DEBUG;
-const USE_HTTPS: boolean = (window as any).USE_HTTPS;
-const validHostUrl = USE_HTTPS ? `https://${validHost}:9100` : `http://${validHost}:9090`;
-const corsHostUrl = USE_HTTPS ? `https://${invalidHost}:9100` : `http://${invalidHost}:9090`;
-const unavailableHost = `${USE_HTTPS ? "https" : "http"}://${validHost}:9999`;
-const emptyHost = USE_HTTPS ? `https://${invalidHost}:9105` : `http://${invalidHost}:9095`;
+import {FailService, TestService, TestUtilService} from "../_proto/improbable/grpcweb/test/test_pb_service";
+import {UncaughtExceptionListener} from "./util";
 
 function headerTrailerCombos(cb: (withHeaders: boolean, withTrailers: boolean, name: string) => void) {
   cb(false, false, " - no headers - no trailers");
@@ -46,7 +68,21 @@ function headerTrailerCombos(cb: (withHeaders: boolean, withTrailers: boolean, n
   cb(true, true, " - with headers - with trailers");
 }
 
-describe("grpc-web-client", () => {
+function runTests({testHostUrl, corsHostUrl, unavailableHost, emptyHost}: TestConfig) {
+
+  function continueStream(streamIdentifier: string, cb: (status: Code) => void) {
+    const req = new ContinueStreamRequest();
+    req.setStreamIdentifier(streamIdentifier);
+    grpc.unary(TestUtilService.ContinueStream, {
+      debug: DEBUG,
+      request: req,
+      host: testHostUrl,
+      onEnd: ({status}) => {
+        cb(status);
+      },
+    })
+  }
+
   describe("invoke", () => {
     headerTrailerCombos((withHeaders, withTrailers, name) => {
       it("should make a unary request" + name, (done) => {
@@ -61,9 +97,9 @@ describe("grpc-web-client", () => {
         grpc.invoke(TestService.Ping, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onHeaders: (headers: BrowserHeaders) => {
-            DEBUG && console.debug("headers", headers);
+            DEBUG && debug("headers", headers);
             didGetOnHeaders = true;
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -76,9 +112,9 @@ describe("grpc-web-client", () => {
             assert.deepEqual(message.getValue(), "hello world");
             assert.deepEqual(message.getCounter(), 252);
           },
-          onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withTrailers) {
               assert.deepEqual(trailers.get("TrailerTestKey1"), ["ServerValue1"]);
@@ -107,9 +143,9 @@ describe("grpc-web-client", () => {
           debug: DEBUG,
           request: ping,
           metadata: new BrowserHeaders({"HeaderTestKey1": "ClientValue1"}),
-          host: validHostUrl,
+          host: testHostUrl,
           onHeaders: (headers: BrowserHeaders) => {
-            DEBUG && console.debug("headers", headers);
+            DEBUG && debug("headers", headers);
             didGetOnHeaders = true;
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -122,9 +158,9 @@ describe("grpc-web-client", () => {
             assert.deepEqual(message.getValue(), "hello world");
             assert.deepEqual(message.getCounter(), 252);
           },
-          onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withTrailers) {
               assert.deepEqual(trailers.get("TrailerTestKey1"), ["ServerValue1"]);
@@ -152,9 +188,9 @@ describe("grpc-web-client", () => {
         grpc.invoke(TestService.PingList, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onHeaders: (headers: BrowserHeaders) => {
-            DEBUG && console.debug("headers", headers);
+            DEBUG && debug("headers", headers);
             didGetOnHeaders = true;
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -165,9 +201,9 @@ describe("grpc-web-client", () => {
             assert.ok(message instanceof PingResponse);
             assert.strictEqual(message.getCounter(), onMessageId++);
           },
-          onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withTrailers) {
               assert.deepEqual(trailers.get("TrailerTestKey1"), ["ServerValue1"]);
@@ -179,6 +215,55 @@ describe("grpc-web-client", () => {
           }
         });
       });
+    });
+
+    headerTrailerCombos((withHeaders, withTrailers, name) => {
+      it("should receive individual cadenced messages" + name, (done) => {
+        let didGetOnHeaders = false;
+        let onMessageId = 0;
+
+        const streamIdentifier = `rpc-${Math.random()}`;
+
+        const ping = new PingRequest();
+        ping.setValue("hello world");
+        ping.setResponseCount(5);
+        ping.setSendHeaders(withHeaders);
+        ping.setSendTrailers(withTrailers);
+        ping.setStreamIdentifier(streamIdentifier);
+
+        grpc.invoke(TestService.PingList, {
+          debug: DEBUG,
+          request: ping,
+          host: testHostUrl,
+          onHeaders: (headers: BrowserHeaders) => {
+            DEBUG && debug("headers", headers);
+            didGetOnHeaders = true;
+            if (withHeaders) {
+              assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
+              assert.deepEqual(headers.get("HeaderTestKey2"), ["ServerValue2"]);
+            }
+          },
+          onMessage: (message: PingResponse) => {
+            continueStream(streamIdentifier, (status) => {
+              DEBUG && debug("continueStream.status", status);
+            });
+            assert.ok(message instanceof PingResponse);
+            assert.strictEqual(message.getCounter(), onMessageId++);
+          },
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
+            assert.strictEqual(statusMessage, undefined, "expected no message");
+            if (withTrailers) {
+              assert.deepEqual(trailers.get("TrailerTestKey1"), ["ServerValue1"]);
+              assert.deepEqual(trailers.get("TrailerTestKey2"), ["ServerValue2"]);
+            }
+            assert.ok(didGetOnHeaders);
+            assert.strictEqual(onMessageId, 5);
+            done();
+          }
+        });
+      }, 10000); // Set timeout to 10s
     });
 
     headerTrailerCombos((withHeaders, withTrailers, name) => {
@@ -195,9 +280,9 @@ describe("grpc-web-client", () => {
         grpc.invoke(TestService.PingList, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onHeaders: (headers: BrowserHeaders) => {
-            DEBUG && console.debug("headers", headers);
+            DEBUG && debug("headers", headers);
             didGetOnHeaders = true;
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -208,9 +293,9 @@ describe("grpc-web-client", () => {
             assert.ok(message instanceof PingResponse);
             assert.strictEqual(message.getCounter(), onMessageId++);
           },
-          onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withTrailers) {
               assert.deepEqual(trailers.get("TrailerTestKey1"), ["ServerValue1"]);
@@ -238,19 +323,19 @@ describe("grpc-web-client", () => {
         grpc.invoke(TestService.PingError, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onHeaders: (headers: BrowserHeaders) => {
-            DEBUG && console.debug("headers", headers);
+            DEBUG && debug("headers", headers);
             didGetOnHeaders = true;
           },
           onMessage: (message: Empty) => {
             didGetOnMessage = true;
           },
-          onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
             assert.deepEqual(trailers.get("grpc-status"), ["12"]);
             assert.deepEqual(trailers.get("grpc-message"), ["Intentionally returning error for PingError"]);
-            assert.strictEqual(status, grpc.Code.Unimplemented);
+            assert.strictEqual(status, Code.Unimplemented);
             assert.strictEqual(statusMessage, "Intentionally returning error for PingError");
             assert.ok(didGetOnHeaders);
             assert.ok(!didGetOnMessage);
@@ -260,38 +345,39 @@ describe("grpc-web-client", () => {
       });
     });
 
-    it("should report failure for a CORS failure", (done) => {
-      let didGetOnHeaders = false;
-      let didGetOnMessage = false;
+    if (!process.env.DISABLE_CORS_TESTS) {
+      it("should report failure for a CORS failure", (done) => {
+        let didGetOnHeaders = false;
+        let didGetOnMessage = false;
 
-      const ping = new PingRequest();
+        const ping = new PingRequest();
 
-      grpc.invoke(FailService.NonExistant, { // The test server hasn't registered this service, so it should fail CORS
-        debug: DEBUG,
-        request: ping,
-        // This test is actually calling the same server as the other tests, but the server should reject the OPTIONS call
-        // because the service isn't registered. This could be the same host as all other tests (that should be CORS
-        // requests because they differ by port from the page the tests are run from), but IE treats different ports on
-        // the same host as the same origin, so this request has to be made to a different host to trigger CORS behaviour.
-        host: corsHostUrl,
-        onHeaders: (headers: BrowserHeaders) => {
-          DEBUG && console.debug("headers", headers);
-          didGetOnHeaders = true;
-        },
-        onMessage: (message: Empty) => {
-          didGetOnMessage = true;
-        },
-        onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
-          // Some browsers return empty Headers for failed requests
-          console.log("status", status, "statusMessage", statusMessage, "trailers", trailers);
-          assert.strictEqual(statusMessage, "Response closed without headers");
-          assert.strictEqual(status, grpc.Code.Internal);
-          assert.ok(!didGetOnMessage);
-          done();
-        }
+        grpc.invoke(FailService.NonExistant, { // The test server hasn't registered this service, so it should fail CORS
+          debug: DEBUG,
+          request: ping,
+          // This test is actually calling the same server as the other tests, but the server should reject the OPTIONS call
+          // because the service isn't registered. This could be the same host as all other tests (that should be CORS
+          // requests because they differ by port from the page the tests are run from), but IE treats different ports on
+          // the same host as the same origin, so this request has to be made to a different host to trigger CORS behaviour.
+          host: corsHostUrl,
+          onHeaders: (headers: BrowserHeaders) => {
+            DEBUG && debug("headers", headers);
+            didGetOnHeaders = true;
+          },
+          onMessage: (message: Empty) => {
+            didGetOnMessage = true;
+          },
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+            // Some browsers return empty Headers for failed requests
+            assert.strictEqual(statusMessage, "Response closed without headers");
+            assert.strictEqual(status, Code.Internal);
+            assert.ok(!didGetOnMessage);
+            done();
+          }
+        });
       });
-    });
+    }
 
     it("should report failure for a dropped response after headers", (done) => {
       let didGetOnHeaders = false;
@@ -303,9 +389,9 @@ describe("grpc-web-client", () => {
       grpc.invoke(TestService.PingError, {
         debug: DEBUG,
         request: ping,
-        host: validHostUrl,
+        host: testHostUrl,
         onHeaders: (headers: BrowserHeaders) => {
-          DEBUG && console.debug("headers", headers);
+          DEBUG && debug("headers", headers);
           didGetOnHeaders = true;
           assert.deepEqual(headers.get("grpc-status"), []);
           assert.deepEqual(headers.get("grpc-message"), []);
@@ -313,10 +399,10 @@ describe("grpc-web-client", () => {
         onMessage: (message: Empty) => {
           didGetOnMessage = true;
         },
-        onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+        onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
           assert.strictEqual(statusMessage, "Response closed without grpc-status (Headers only)");
-          assert.strictEqual(status, grpc.Code.Internal);
+          assert.strictEqual(status, Code.Internal);
           assert.ok(!didGetOnMessage);
           done();
         }
@@ -334,16 +420,16 @@ describe("grpc-web-client", () => {
         request: ping,
         host: unavailableHost, // Should not be available
         onHeaders: (headers: BrowserHeaders) => {
-          DEBUG && console.debug("headers", headers);
+          DEBUG && debug("headers", headers);
           didGetOnHeaders = true;
         },
         onMessage: (message: Empty) => {
           didGetOnMessage = true;
         },
-        onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+        onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
           assert.strictEqual(statusMessage, "Response closed without headers");
-          assert.strictEqual(status, grpc.Code.Internal);
+          assert.strictEqual(status, Code.Internal);
           assert.ok(!didGetOnMessage);
           done();
         }
@@ -361,7 +447,7 @@ describe("grpc-web-client", () => {
         request: ping,
         host: emptyHost,
         onHeaders: (headers: BrowserHeaders) => {
-          DEBUG && console.debug("headers", headers);
+          DEBUG && debug("headers", headers);
           didGetOnHeaders = true;
           assert.deepEqual(headers.get("grpc-status"), ["12"]);
           assert.deepEqual(headers.get("grpc-message"), ["unknown service improbable.grpcweb.test.FailService"]);
@@ -369,8 +455,8 @@ describe("grpc-web-client", () => {
         onMessage: (message: Empty) => {
           didGetOnMessage = true;
         },
-        onEnd: (status: grpc.Code, statusMessage: string, trailers: BrowserHeaders) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+        onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
           assert.strictEqual(statusMessage, "unknown service improbable.grpcweb.test.FailService");
           assert.strictEqual(status, 12);
           assert.deepEqual(trailers.get("grpc-status"), ["12"]);
@@ -381,6 +467,47 @@ describe("grpc-web-client", () => {
         }
       });
     });
+
+    describe("exception handling", () => {
+      let uncaughtHandler: UncaughtExceptionListener;
+      beforeEach(() => {
+        uncaughtHandler = new UncaughtExceptionListener();
+        uncaughtHandler.attach();
+      });
+
+      afterEach(() => {
+        uncaughtHandler.detach();
+      });
+
+      it("should not suppress exceptions", (done) => {
+        const ping = new PingRequest();
+        ping.setValue("hello world");
+
+        grpc.invoke(TestService.Ping, {
+          debug: DEBUG,
+          request: ping,
+          host: testHostUrl,
+          onHeaders: (headers: BrowserHeaders) => {
+            throw new Error("onHeaders exception");
+          },
+          onMessage: (message: PingResponse) => {
+            throw new Error("onMessage exception");
+          },
+          onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+            setTimeout(() => {
+              uncaughtHandler.detach();
+              const exceptionsCaught = uncaughtHandler.getMessages();
+              assert.lengthOf(exceptionsCaught, 3);
+              assert.include(exceptionsCaught[0], "onHeaders exception");
+              assert.include(exceptionsCaught[1], "onMessage exception");
+              assert.include(exceptionsCaught[2], "onEnd exception");
+              done();
+            }, 100);
+            throw new Error("onEnd exception");
+          }
+        });
+      });
+    });
   });
 
   describe("unary", () => {
@@ -389,14 +516,14 @@ describe("grpc-web-client", () => {
       ping.setValue("hello world");
 
       assert.throw(() => {
-        grpc.unary(TestService.PingList as any as UnaryMethodDefinition<PingRequest, PingResponse>, {
-          debug: DEBUG,
-          request: ping,
-          host: validHostUrl,
-          onEnd: ({status, statusMessage, headers, message, trailers}) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
-          }
-        })
+          grpc.unary(TestService.PingList as any as UnaryMethodDefinition<PingRequest, PingResponse>, {
+            debug: DEBUG,
+            request: ping,
+            host: testHostUrl,
+            onEnd: ({status, statusMessage, headers, message, trailers}) => {
+              DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            }
+          })
         }, ".unary cannot be used with server-streaming methods. Use .invoke instead."
       );
     });
@@ -411,10 +538,10 @@ describe("grpc-web-client", () => {
         grpc.unary(TestService.Ping, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onEnd: ({status, statusMessage, headers, message, trailers}) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -446,10 +573,10 @@ describe("grpc-web-client", () => {
           debug: DEBUG,
           request: ping,
           metadata: new BrowserHeaders({"HeaderTestKey1": "ClientValue1"}),
-          host: validHostUrl,
+          host: testHostUrl,
           onEnd: ({status, statusMessage, headers, message, trailers}) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.OK, "expected OK (0)");
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            assert.strictEqual(status, Code.OK, "expected OK (0)");
             assert.strictEqual(statusMessage, undefined, "expected no message");
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -480,10 +607,10 @@ describe("grpc-web-client", () => {
         grpc.unary(TestService.PingError, {
           debug: DEBUG,
           request: ping,
-          host: validHostUrl,
+          host: testHostUrl,
           onEnd: ({status, statusMessage, headers, message, trailers}) => {
-            DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
-            assert.strictEqual(status, grpc.Code.Unimplemented);
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            assert.strictEqual(status, Code.Unimplemented);
             assert.strictEqual(statusMessage, "Intentionally returning error for PingError");
             if (withHeaders) {
               assert.deepEqual(headers.get("HeaderTestKey1"), ["ServerValue1"]);
@@ -502,26 +629,28 @@ describe("grpc-web-client", () => {
       });
     });
 
-    it("should report failure for a CORS failure", (done) => {
-      const ping = new PingRequest();
+    if (!process.env.DISABLE_CORS_TESTS) {
+      it("should report failure for a CORS failure", (done) => {
+        const ping = new PingRequest();
 
-      grpc.unary(FailService.NonExistant, { // The test server hasn't registered this service, so it should fail CORS
-        debug: DEBUG,
-        request: ping,
-        // This test is actually calling the same server as the other tests, but the server should reject the OPTIONS call
-        // because the service isn't registered. This could be the same host as all other tests (that should be CORS
-        // requests because they differ by port from the page the tests are run from), but IE treats different ports on
-        // the same host as the same origin, so this request has to be made to a different host to trigger CORS behaviour.
-        host: corsHostUrl,
-        onEnd: ({status, statusMessage, headers, message, trailers}) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
-          // Some browsers return empty Headers for failed requests
-          assert.strictEqual(statusMessage, "Response closed without headers");
-          assert.strictEqual(status, grpc.Code.Internal);
-          done();
-        }
+        grpc.unary(FailService.NonExistant, { // The test server hasn't registered this service, so it should fail CORS
+          debug: DEBUG,
+          request: ping,
+          // This test is actually calling the same server as the other tests, but the server should reject the OPTIONS call
+          // because the service isn't registered. This could be the same host as all other tests (that should be CORS
+          // requests because they differ by port from the page the tests are run from), but IE treats different ports on
+          // the same host as the same origin, so this request has to be made to a different host to trigger CORS behaviour.
+          host: corsHostUrl,
+          onEnd: ({status, statusMessage, headers, message, trailers}) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            // Some browsers return empty Headers for failed requests
+            assert.strictEqual(statusMessage, "Response closed without headers");
+            assert.strictEqual(status, Code.Internal);
+            done();
+          }
+        });
       });
-    });
+    }
 
     it("should report failure for a dropped response after headers", (done) => {
       const ping = new PingRequest();
@@ -530,11 +659,11 @@ describe("grpc-web-client", () => {
       grpc.unary(TestService.PingError, {
         debug: DEBUG,
         request: ping,
-        host: validHostUrl,
+        host: testHostUrl,
         onEnd: ({status, statusMessage, headers, message, trailers}) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
           assert.strictEqual(statusMessage, "Response closed without grpc-status (Headers only)");
-          assert.strictEqual(status, grpc.Code.Internal);
+          assert.strictEqual(status, Code.Internal);
           assert.deepEqual(headers.get("grpc-status"), []);
           assert.deepEqual(headers.get("grpc-message"), []);
           done();
@@ -551,9 +680,9 @@ describe("grpc-web-client", () => {
         request: ping,
         host: unavailableHost, // Should not be available
         onEnd: ({status, statusMessage, headers, message, trailers}) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
           assert.strictEqual(statusMessage, "Response closed without headers");
-          assert.strictEqual(status, grpc.Code.Internal);
+          assert.strictEqual(status, Code.Internal);
           assert.isNull(message);
           done();
         }
@@ -568,7 +697,7 @@ describe("grpc-web-client", () => {
         request: ping,
         host: emptyHost,
         onEnd: ({status, statusMessage, headers, message, trailers}) => {
-          DEBUG && console.debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
           assert.strictEqual(statusMessage, "unknown service improbable.grpcweb.test.FailService");
           assert.strictEqual(status, 12);
           assert.isNull(message);
@@ -580,5 +709,162 @@ describe("grpc-web-client", () => {
         }
       });
     });
+
+    describe("exception handling", () => {
+      let uncaughtHandler: UncaughtExceptionListener;
+      beforeEach(() => {
+        uncaughtHandler = new UncaughtExceptionListener();
+        uncaughtHandler.attach();
+      });
+
+      afterEach(() => {
+        uncaughtHandler.detach();
+      });
+
+      it("should not suppress exceptions", (done) => {
+        const ping = new PingRequest();
+        ping.setValue("hello world");
+
+        grpc.unary(TestService.Ping, {
+          debug: DEBUG,
+          request: ping,
+          host: testHostUrl,
+          onEnd: ({status, statusMessage, headers, message, trailers}) => {
+            DEBUG && debug("status", status, "statusMessage", statusMessage, "headers", headers, "res", message, "trailers", trailers);
+            setTimeout(() => {
+              uncaughtHandler.detach();
+              const exceptionsCaught = uncaughtHandler.getMessages();
+              assert.lengthOf(exceptionsCaught, 1);
+              assert.include(exceptionsCaught[0], "onEnd exception");
+              done();
+            }, 100);
+            throw new Error("onEnd exception");
+          }
+        });
+      });
+    });
+  });
+
+  describe("cancellation handling", () => {
+    it('should allow the caller to abort an rpc before it completes', () => {
+      let transportCancelFuncInvoked = false;
+
+      const cancellationSpyTransport = () => {
+        return () => {
+          transportCancelFuncInvoked = true;
+        }
+      };
+
+      const ping = new PingRequest();
+      ping.setValue("hello world");
+
+      const reqObj = grpc.invoke(TestService.Ping, {
+        debug: DEBUG,
+        request: ping,
+        host: testHostUrl,
+        transport: cancellationSpyTransport,
+        onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => { },
+      });
+
+      reqObj.abort();
+
+      assert.equal(transportCancelFuncInvoked, true, "transport's cancel func must be invoked");
+    });
+
+    it("should handle aborting a streaming response mid-stream with propagation of the disconnection to the server", (done) => {
+      let onMessageId = 0;
+
+      const streamIdentifier = `rpc-${Math.random()}`;
+
+      const ping = new PingRequest();
+      ping.setValue("hello world");
+      ping.setResponseCount(100); // Request more messages than the client will accept before cancelling
+      ping.setStreamIdentifier(streamIdentifier);
+
+      let reqObj: Request;
+
+      // Checks are performed every 1s = 15s total wait
+      const maxAbortChecks = 15;
+
+      const numMessagesBeforeAbort = 5;
+
+      const doAbort = () => {
+        DEBUG && debug("doAbort");
+        reqObj.abort();
+
+        // To ensure that the transport is successfully closing the connection, poll the server every 1s until
+        // it confirms the connection was closed. Connection closure is immediate in some browser/transport combinations,
+        // but can take several seconds in others.
+        function checkAbort(attempt: number) {
+          DEBUG && debug("checkAbort", attempt);
+          continueStream(streamIdentifier, (status) => {
+            DEBUG && debug("checkAbort.continueStream.status", status);
+
+            const checkStreamClosedRequest = new CheckStreamClosedRequest();
+            checkStreamClosedRequest.setStreamIdentifier(streamIdentifier);
+            grpc.unary(TestUtilService.CheckStreamClosed, {
+              debug: DEBUG,
+              request: checkStreamClosedRequest,
+              host: testHostUrl,
+              onEnd: ({message}) => {
+                const closed = (message as CheckStreamClosedResponse).getClosed();
+                DEBUG && debug("closed", closed);
+                if (closed) {
+                  done();
+                } else {
+                  if (attempt >= maxAbortChecks) {
+                    assert.ok(closed, `server did not observe connection closure within ${maxAbortChecks} seconds`);
+                    done();
+                  } else {
+                    setTimeout(() => {
+                      checkAbort(attempt + 1);
+                    }, 1000);
+                  }
+                }
+              },
+            })
+          });
+        }
+
+        checkAbort(0);
+      };
+
+      reqObj = grpc.invoke(TestService.PingList, {
+        debug: DEBUG,
+        request: ping,
+        host: testHostUrl,
+        onHeaders: (headers: BrowserHeaders) => {
+          DEBUG && debug("headers", headers);
+        },
+        onMessage: (message: PingResponse) => {
+          assert.ok(message instanceof PingResponse);
+          DEBUG && debug("onMessage.message.getCounter()", message.getCounter());
+          assert.strictEqual(message.getCounter(), onMessageId++);
+          if (message.getCounter() === numMessagesBeforeAbort) {
+            // Abort after receiving numMessagesBeforeAbort messages
+            doAbort();
+          } else if (message.getCounter() < numMessagesBeforeAbort) {
+            // Only request the next message if not yet aborted
+            continueStream(streamIdentifier, (status) => {
+              DEBUG && debug("onMessage.continueStream.status", status);
+            });
+          }
+        },
+        onEnd: (status: Code, statusMessage: string, trailers: BrowserHeaders) => {
+          DEBUG && debug("status", status, "statusMessage", statusMessage, "trailers", trailers);
+          // onEnd shouldn't be called if abort is called prior to the response ending
+          assert.fail();
+        }
+      });
+    }, 20000);
+  });
+}
+
+describe("grpc-web-client", () => {
+  describe("http1", () => {
+    runTests(http1Config);
+  });
+  describe("http2", () => {
+    runTests(http2Config);
   });
 });

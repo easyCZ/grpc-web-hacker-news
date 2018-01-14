@@ -13,7 +13,8 @@
     "noEmitOnError": true
   },
   "types": [
-    "jasmine"
+    "jasmine",
+    "node"
   ],
   "include": [
     "./src"

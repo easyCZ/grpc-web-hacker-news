@@ -1,6 +1,6 @@
 const path = require('path');
 module.exports = {
-  entry: "./src/grpc.spec.ts",
+  entry: "./src/spec.ts",
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'integration-tests.js'
@@ -16,7 +16,7 @@ module.exports = {
       },
       {
         test: /\.ts$/,
-        include: /src/,
+        include: [/src/, /_proto/],
         exclude: /node_modules/,
         loader: "ts-loader"
       }

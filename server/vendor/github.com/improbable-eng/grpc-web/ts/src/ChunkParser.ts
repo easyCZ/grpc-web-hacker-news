@@ -1,4 +1,5 @@
-import {BrowserHeaders} from "browser-headers";
+import {Metadata} from "./grpc";
+import * as TextEncoding from "text-encoding";
 
 const HEADER_SIZE = 5;
 
@@ -9,8 +10,9 @@ function isTrailerHeader(headerView: DataView) {
   return (headerView.getUint8(0) & 0x80) === 0x80
 }
 
-function parseTrailerData(msgData: Uint8Array): BrowserHeaders {
-  return new BrowserHeaders(new global.TextDecoder("utf-8").decode(msgData))
+function parseTrailerData(msgData: Uint8Array): Metadata {
+  const decoder = global.TextDecoder !== undefined ? global.TextDecoder : TextEncoding.TextDecoder;
+  return new Metadata(new decoder("utf-8").decode(msgData))
 }
 
 function readLengthFromHeader(headerView: DataView) {
@@ -47,7 +49,7 @@ export enum ChunkType {
 
 export type Chunk = {
   chunkType: ChunkType,
-  trailers?: BrowserHeaders,
+  trailers?: Metadata,
   data?: Uint8Array,
 }
 
