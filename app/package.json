@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/semantic-ui": "^2.2.6",
     "google-protobuf": "^3.5.0",
     "grpc-web-client": "^0.3.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-scripts-ts": "2.10.0"
+    "react-scripts-ts": "2.10.0",
+    "semantic-ui-react": "^0.77.2"
   },
   "scripts": {
     "start": "react-scripts-ts start",

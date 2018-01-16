@@ -107,6 +107,56 @@ export namespace ListStoriesRequest {
   }
 }
 
+export class GetStoryRequest extends jspb.Message {
+  hasId(): boolean;
+  clearId(): void;
+  getId(): ItemId | undefined;
+  setId(value?: ItemId): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetStoryRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetStoryRequest): GetStoryRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetStoryRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetStoryRequest;
+  static deserializeBinaryFromReader(message: GetStoryRequest, reader: jspb.BinaryReader): GetStoryRequest;
+}
+
+export namespace GetStoryRequest {
+  export type AsObject = {
+    id?: ItemId.AsObject,
+  }
+}
+
+export class GetStoryResponse extends jspb.Message {
+  hasStory(): boolean;
+  clearStory(): void;
+  getStory(): Item | undefined;
+  setStory(value?: Item): void;
+
+  getHtml(): Uint8Array | string;
+  getHtml_asU8(): Uint8Array;
+  getHtml_asB64(): string;
+  setHtml(value: Uint8Array | string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetStoryResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetStoryResponse): GetStoryResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetStoryResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetStoryResponse;
+  static deserializeBinaryFromReader(message: GetStoryResponse, reader: jspb.BinaryReader): GetStoryResponse;
+}
+
+export namespace GetStoryResponse {
+  export type AsObject = {
+    story?: Item.AsObject,
+    html: Uint8Array | string,
+  }
+}
+
 export enum ItemType {
   UNKNOWN = 0,
   JOB = 1,

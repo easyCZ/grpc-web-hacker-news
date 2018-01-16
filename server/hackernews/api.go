@@ -34,13 +34,12 @@ func NewHackerNewsApi(client *http.Client) *hackerNewsApi {
 	}
 }
 
-func (api *hackerNewsApi) GetStory(id int, stories chan<- *hackernews_pb.Item) {
+func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Item, error) {
 	ref, err := api.storyRef(id)
 	if err != nil {
 		log.Fatalf("Failed to get story reference")
 	}
 	var value Item
-	//var v map[string]interface{}
 	if err := ref.Value(&value); err != nil {
 		log.Fatal("failed to get Story %d", id, err)
 	}
@@ -53,7 +52,7 @@ func (api *hackerNewsApi) GetStory(id int, stories chan<- *hackernews_pb.Item) {
 		itemType = hackernews_pb.ItemType_UNKNOWN
 
 	}
-	stories <- &hackernews_pb.Item{
+	return &hackernews_pb.Item{
 		Id:    &hackernews_pb.ItemId{Id: value.Id},
 		By:    value.By,
 		Score: value.Score,
@@ -61,7 +60,7 @@ func (api *hackerNewsApi) GetStory(id int, stories chan<- *hackernews_pb.Item) {
 		Title: value.Title,
 		Type:  itemType,
 		Url:   value.Url,
-	}
+	}, nil
 }
 
 func (api *hackerNewsApi) TopStories(stories chan<- *hackernews_pb.Item) error {
@@ -76,7 +75,10 @@ func (api *hackerNewsApi) TopStories(stories chan<- *hackernews_pb.Item) error {
 	}
 
 	for _, id := range ids {
-		go api.GetStory(int(id), stories)
+		go func() {
+			story, _ := api.GetStory(int(id))
+			stories <- story
+		}()
 	}
 
 	return nil

@@ -26,13 +26,21 @@ message Item {
 }
 
 service HackerNewsService {
-
     rpc ListStories (ListStoriesRequest) returns (stream ListStoriesResponse);
-
+    rpc GetStory (GetStoryRequest) returns (GetStoryResponse);
 }
 
 message ListStoriesResponse {
     Item story = 1;
 }
 message ListStoriesRequest {
+}
+
+message GetStoryRequest {
+    ItemId id = 1;
+}
+
+message GetStoryResponse {
+    Item story = 1;
+    bytes html = 2;
 }
