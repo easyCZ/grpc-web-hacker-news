@@ -2,7 +2,7 @@ import * as React from 'react';
 import './App.css';
 import { grpc } from 'grpc-web-client';
 import { HackerNewsService } from './proto/hackernews_pb_service';
-import { GetStoryRequest, ListStoriesRequest, ListStoriesResponse } from './proto/hackernews_pb';
+import { ListStoriesRequest, ListStoriesResponse } from './proto/hackernews_pb';
 import { Button, Container, Divider, Grid, Header, Image, Menu, Segment } from 'semantic-ui-react';
 import StoryList from './StoryList';
 import StoryView from './StoryView';
@@ -17,7 +17,7 @@ const ThemingLayout = () => (
         <StoryList />
       </Grid.Column>
 
-      <Grid.Column width={9}>
+      <Grid.Column width={13} stretched={true}>
 
         <Header as="h2">Example body text</Header>
         <StoryView />
@@ -244,27 +244,29 @@ const ThemingLayout = () => (
 class App extends React.Component {
 
   componentDidMount() {
+    let count = 0;
     const request = new ListStoriesRequest();
     grpc.invoke(HackerNewsService.ListStories, {
       request: request,
       debug: true,
       host: 'http://localhost:8900',
       onMessage: (res: ListStoriesResponse) => {
+        count += 1;
         // const obj: ListStoriesResponse = res.toObject();
-        const id = res.getStory()!.getId();
+        const url = res.getStory()!.getUrl();
+        console.log('url', url);
         // console.log(id);
-
-        const req = new GetStoryRequest();
-        req.setId(id);
-
-        grpc.unary(HackerNewsService.GetStory, {
-          host: 'http://localhost:8900',
-          debug: true,
-          request: req,
-          onEnd: (result) => {
-            console.log(result.message ? atob((result.message.toObject() as {html: string}).html) : 'nil');
-          }
-        });
+        if (count === 1) {
+          fetch('http://localhost:8900/article-proxy?q=' + encodeURIComponent(url));
+        }
+        // grpc.unary(HackerNewsService.GetStory, {
+        //   host: 'http://localhost:8900',
+        //   debug: true,
+        //   request: req,
+        //   onEnd: (result) => {
+        //     console.log(result.message ? atob((result.message.toObject() as {html: string}).html) : 'nil');
+        //   }
+        // });
       },
       onEnd: (res) => {
         console.log('end', res);
