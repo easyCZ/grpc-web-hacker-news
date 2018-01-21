@@ -1,31 +1,23 @@
 import * as React from 'react';
-import { Image, Item } from 'semantic-ui-react';
+import { Item } from 'semantic-ui-react';
+import { Story } from './reducers/stories';
 
-const StoryList: React.SFC<{}> = (props) => {
+type StoryListProps = {
+  stories: Story[],
+};
+
+const StoryList: React.SFC<StoryListProps> = (props) => {
   return (
     <Item.Group>
-      <Item>
-        {/*<Item.Image size="tiny" content={<div>test</div>}/>*/}
-
-        <Item.Content>
-          <Item.Header as="a">Header</Item.Header>
-          <Item.Meta>Description</Item.Meta>
-          <Item.Extra>Additional Details</Item.Extra>
-        </Item.Content>
-      </Item>
-
-      <Item>
-        {/*<Item.Image size="tiny" src="/assets/images/wireframe/image.png"/>*/}
-
-        <Item.Content>
-          <Item.Header as="a">Header</Item.Header>
-          <Item.Meta>Description</Item.Meta>
-          <Item.Description>
-            <Image src="/assets/images/wireframe/short-paragraph.png"/>
-          </Item.Description>
-          <Item.Extra>Additional Details</Item.Extra>
-        </Item.Content>
-      </Item>
+      {props.stories.map((story, i) =>
+        <Item key={i}>
+          <Item.Content>
+            <Item.Header as="a">{story.title}</Item.Header>
+            <Item.Meta>By: {story.by}</Item.Meta>
+            <Item.Extra>{story.score} {story.time}</Item.Extra>
+          </Item.Content>
+        </Item>
+      )}
     </Item.Group>
   );
 };
