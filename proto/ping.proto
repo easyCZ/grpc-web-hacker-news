@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package grpc_web_hacker_news;
+
+message PingRequest {}
+message PingResponse {}
+
+service PingService {
+    rpc Ping (PingRequest) returns (PingResponse);
+}

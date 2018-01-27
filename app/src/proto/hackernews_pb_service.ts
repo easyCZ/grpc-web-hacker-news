@@ -14,12 +14,4 @@ export namespace HackerNewsService {
     static readonly requestType = proto_hackernews_pb.ListStoriesRequest;
     static readonly responseType = proto_hackernews_pb.ListStoriesResponse;
   }
-  export class GetStory {
-    static readonly methodName = "GetStory";
-    static readonly service = HackerNewsService;
-    static readonly requestStream = false;
-    static readonly responseStream = false;
-    static readonly requestType = proto_hackernews_pb.GetStoryRequest;
-    static readonly responseType = proto_hackernews_pb.GetStoryResponse;
-  }
 }

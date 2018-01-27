@@ -6,7 +6,7 @@ import { Container, Grid, Header } from 'semantic-ui-react';
 import StoryList from './StoryList';
 import StoryView from './StoryView';
 import { RootAction } from './actions';
-import { listStoriesInit } from './actions/stories';
+import { listStories } from './actions/stories';
 
 type StoriesProps = {
   stories: Story[],
@@ -18,7 +18,7 @@ type StoriesProps = {
 class Stories extends React.Component<StoriesProps, {}> {
 
   componentDidMount() {
-    this.props.dispatch(listStoriesInit());
+    this.props.dispatch(listStories());
   }
 
   render() {

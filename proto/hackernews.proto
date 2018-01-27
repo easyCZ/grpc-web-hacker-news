@@ -27,7 +27,7 @@ message Item {
 
 service HackerNewsService {
     rpc ListStories (ListStoriesRequest) returns (stream ListStoriesResponse);
-    rpc GetStory (GetStoryRequest) returns (GetStoryResponse);
+//    rpc GetStory (GetStoryRequest) returns (GetStoryResponse);
 }
 
 message ListStoriesResponse {
