@@ -38,7 +38,7 @@ protoc \
 ```
 
 ### gRPC-Web Redux Middleware
-An example redux middleware is included.
+An [example redux middleware is included](https://github.com/easyCZ/grpc-web-hacker-news/blob/master/app/src/middleware/grpc.ts).
 ```js
 import { Action, Dispatch, Middleware, MiddlewareAPI } from 'redux';
 import { Code, grpc, Metadata, Transport } from 'grpc-web-client';
