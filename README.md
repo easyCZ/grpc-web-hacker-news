@@ -1,6 +1,8 @@
 ## grpc-web-hacker-news
 An example app implementing a Hacker News reader. This example aims to demonstrate usage of grpc-web with React. It additionally shows how to integrate with Redux.
 
+![Screenshot](https://raw.githubusercontent.com/easyCZ/grpc-web-hacker-news/master/screenshots/grpc-web-hacker-news.png)
+
 ### Running
 To start both the Go backend server and the frontend React application, run the following:
 ```bash
