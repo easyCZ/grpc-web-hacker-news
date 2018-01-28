@@ -2,22 +2,16 @@
 
 
 [[projects]]
-  name = "github.com/PuerkitoBio/goquery"
-  packages = ["."]
-  revision = "a41cf096e64e3752d7683898d5746bc0b98ee213"
-  version = "v1.2.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/andybalholm/cascadia"
-  packages = ["."]
-  revision = "349dd0209470eabd9514242c688c403c0926d266"
-
-[[projects]]
   name = "github.com/go-chi/chi"
-  packages = ["."]
+  packages = [".","middleware"]
   revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
   version = "v3.3.2"
+
+[[projects]]
+  name = "github.com/go-chi/cors"
+  packages = ["."]
+  revision = "dba6525398619dead495962a916728e7ee2ca322"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -45,7 +39,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","html","html/atom","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
+  packages = ["context","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
   revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
@@ -75,6 +69,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5ee5299a9ddba011786a8704111f467f9e21804d5ebe20357ef54b8db0f9a926"
+  inputs-digest = "84a2c37f45ce2428fc5e358d7a63c3f12ffe2d37289d146724008c1b198b16b8"
   solver-name = "gps-cdcl"
   solver-version = 1
