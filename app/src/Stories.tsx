@@ -22,16 +22,17 @@ class Stories extends React.Component<StoriesProps, {}> {
   }
 
   render() {
+    console.log(this.props.stories)
     return (
-      <Container style={{marginTop: '3em'}}>
+      <Container style={{padding: '1em'}} fluid={true}>
         <Header as="h1" dividing={true}>Hacker News with gRPC-Web</Header>
 
         <Grid columns={2} stackable={true} divided={'vertically'}>
-          <Grid.Column width={3}>
+          <Grid.Column width={4}>
             <StoryList stories={this.props.stories}/>
           </Grid.Column>
 
-          <Grid.Column width={13} stretched={true}>
+          <Grid.Column width={12} stretched={true}>
 
             <Header as="h2">Example body text</Header>
             <StoryView/>
@@ -45,7 +46,7 @@ class Stories extends React.Component<StoriesProps, {}> {
 }
 
 export default connect((state: RootState) => ({
-  stories: Array.from(state.stories.stories.values()),
+  stories: Object.keys(state.stories.stories).map(key => state.stories.stories[key]),
   loading: state.stories.loading,
   error: state.stories.error,
 }))(Stories);

@@ -1,5 +1,5 @@
 import { Action } from 'redux';
-import { ListStoriesRequest, ListStoriesResponse } from '../proto/hackernews_pb';
+import { Item, ListStoriesRequest, ListStoriesResponse } from '../proto/hackernews_pb';
 import { GrpcAction, grpcRequest } from '../middleware/grpc';
 import { Code, Metadata } from 'grpc-web-client';
 import { HackerNewsService } from '../proto/hackernews_pb_service';
@@ -7,10 +7,8 @@ import { PingRequest, PingResponse } from '../proto/ping_pb';
 import { PingService } from '../proto/ping_pb_service';
 
 export const STORIES_INIT = 'STORIES_INIT';
+export const ADD_STORY = 'ADD_STORY';
 
-type ListStoriesInit = {
-  type: typeof STORIES_INIT,
-};
 
 export const ping = () => {
   return grpcRequest<PingRequest, PingResponse>({
@@ -38,14 +36,28 @@ export const listStories = () => {
     host: 'http://localhost:8900',
     methodDescriptor: HackerNewsService.ListStories,
     onMessage: message => {
-      console.log(message);
+      const story = message.getStory();
+      if (story) {
+        return addStory(story);
+      }
       return;
     },
   });
 };
 
+type ListStoriesInit = {
+  type: typeof STORIES_INIT,
+};
 export const listStoriesInit = (): ListStoriesInit => ({type: STORIES_INIT});
+
+type AddStory = {
+  type: typeof ADD_STORY,
+  payload: Item,
+};
+
+export const addStory = (story: Item) => ({ type: ADD_STORY, payload: story });
 
 export type StoryActionTypes =
   | ListStoriesInit
+  | AddStory
   | GrpcAction<ListStoriesRequest, ListStoriesResponse>;
