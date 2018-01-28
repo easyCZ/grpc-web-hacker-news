@@ -2,45 +2,20 @@ syntax = "proto3";
 
 package grpc_web_hacker_news;
 
-message ItemId {
+message Story {
     int32 id = 1;
-}
-
-enum ItemType {
-    UNKNOWN = 0;
-    JOB = 1;
-    STORY = 2;
-    COMMENT = 3;
-    POLL = 4;
-    POLLOPT = 5;
-}
-
-message Item {
-    ItemId id = 1;
     int32 score = 2;
     string title = 3;
     string by = 4;
     int32 time = 5;
     string url = 6;
-    ItemType type = 7;
 }
 
 service HackerNewsService {
     rpc ListStories (ListStoriesRequest) returns (stream ListStoriesResponse);
-//    rpc GetStory (GetStoryRequest) returns (GetStoryResponse);
 }
 
 message ListStoriesResponse {
-    Item story = 1;
+    Story story = 1;
 }
-message ListStoriesRequest {
-}
-
-message GetStoryRequest {
-    ItemId id = 1;
-}
-
-message GetStoryResponse {
-    Item story = 1;
-    bytes html = 2;
-}
+message ListStoriesRequest {}

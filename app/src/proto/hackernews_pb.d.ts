@@ -3,31 +3,9 @@
 
 import * as jspb from "google-protobuf";
 
-export class ItemId extends jspb.Message {
+export class Story extends jspb.Message {
   getId(): number;
   setId(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ItemId.AsObject;
-  static toObject(includeInstance: boolean, msg: ItemId): ItemId.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ItemId, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ItemId;
-  static deserializeBinaryFromReader(message: ItemId, reader: jspb.BinaryReader): ItemId;
-}
-
-export namespace ItemId {
-  export type AsObject = {
-    id: number,
-  }
-}
-
-export class Item extends jspb.Message {
-  hasId(): boolean;
-  clearId(): void;
-  getId(): ItemId | undefined;
-  setId(value?: ItemId): void;
 
   getScore(): number;
   setScore(value: number): void;
@@ -44,36 +22,32 @@ export class Item extends jspb.Message {
   getUrl(): string;
   setUrl(value: string): void;
 
-  getType(): ItemType;
-  setType(value: ItemType): void;
-
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Item.AsObject;
-  static toObject(includeInstance: boolean, msg: Item): Item.AsObject;
+  toObject(includeInstance?: boolean): Story.AsObject;
+  static toObject(includeInstance: boolean, msg: Story): Story.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Item, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Item;
-  static deserializeBinaryFromReader(message: Item, reader: jspb.BinaryReader): Item;
+  static serializeBinaryToWriter(message: Story, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Story;
+  static deserializeBinaryFromReader(message: Story, reader: jspb.BinaryReader): Story;
 }
 
-export namespace Item {
+export namespace Story {
   export type AsObject = {
-    id?: ItemId.AsObject,
+    id: number,
     score: number,
     title: string,
     by: string,
     time: number,
     url: string,
-    type: ItemType,
   }
 }
 
 export class ListStoriesResponse extends jspb.Message {
   hasStory(): boolean;
   clearStory(): void;
-  getStory(): Item | undefined;
-  setStory(value?: Item): void;
+  getStory(): Story | undefined;
+  setStory(value?: Story): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListStoriesResponse.AsObject;
@@ -87,7 +61,7 @@ export class ListStoriesResponse extends jspb.Message {
 
 export namespace ListStoriesResponse {
   export type AsObject = {
-    story?: Item.AsObject,
+    story?: Story.AsObject,
   }
 }
 
@@ -105,64 +79,5 @@ export class ListStoriesRequest extends jspb.Message {
 export namespace ListStoriesRequest {
   export type AsObject = {
   }
-}
-
-export class GetStoryRequest extends jspb.Message {
-  hasId(): boolean;
-  clearId(): void;
-  getId(): ItemId | undefined;
-  setId(value?: ItemId): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): GetStoryRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: GetStoryRequest): GetStoryRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: GetStoryRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): GetStoryRequest;
-  static deserializeBinaryFromReader(message: GetStoryRequest, reader: jspb.BinaryReader): GetStoryRequest;
-}
-
-export namespace GetStoryRequest {
-  export type AsObject = {
-    id?: ItemId.AsObject,
-  }
-}
-
-export class GetStoryResponse extends jspb.Message {
-  hasStory(): boolean;
-  clearStory(): void;
-  getStory(): Item | undefined;
-  setStory(value?: Item): void;
-
-  getHtml(): Uint8Array | string;
-  getHtml_asU8(): Uint8Array;
-  getHtml_asB64(): string;
-  setHtml(value: Uint8Array | string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): GetStoryResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: GetStoryResponse): GetStoryResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: GetStoryResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): GetStoryResponse;
-  static deserializeBinaryFromReader(message: GetStoryResponse, reader: jspb.BinaryReader): GetStoryResponse;
-}
-
-export namespace GetStoryResponse {
-  export type AsObject = {
-    story?: Item.AsObject,
-    html: Uint8Array | string,
-  }
-}
-
-export enum ItemType {
-  UNKNOWN = 0,
-  JOB = 1,
-  STORY = 2,
-  COMMENT = 3,
-  POLL = 4,
-  POLLOPT = 5,
 }
 

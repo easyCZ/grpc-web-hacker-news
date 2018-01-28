@@ -3,27 +3,10 @@ import { Item, ListStoriesRequest, ListStoriesResponse } from '../proto/hackerne
 import { GrpcAction, grpcRequest } from '../middleware/grpc';
 import { Code, Metadata } from 'grpc-web-client';
 import { HackerNewsService } from '../proto/hackernews_pb_service';
-import { PingRequest, PingResponse } from '../proto/ping_pb';
-import { PingService } from '../proto/ping_pb_service';
 
 export const STORIES_INIT = 'STORIES_INIT';
 export const ADD_STORY = 'ADD_STORY';
 export const SELECT_STORY = 'SELECT_STORY';
-
-export const ping = () => {
-  return grpcRequest<PingRequest, PingResponse>({
-    request: new PingRequest(),
-    onEnd: (code: Code, message: string | undefined, trailers: Metadata): Action | void => {
-      return;
-    },
-    host: 'http://localhost:8900',
-    methodDescriptor: PingService.Ping,
-    onMessage: (message) => {
-      console.log(message);
-      return;
-    }
-  });
-};
 
 type AddStory = {
   type: typeof ADD_STORY,

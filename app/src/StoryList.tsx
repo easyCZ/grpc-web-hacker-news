@@ -1,17 +1,22 @@
 import * as React from 'react';
-import { Item } from 'semantic-ui-react';
+import { Item, Icon } from 'semantic-ui-react';
 import {Item as Story } from './proto/hackernews_pb';
 
 type StoryListProps = {
   stories: Story.AsObject[],
+  selected: Story.AsObject | null,
   onStorySelect: (id: number) => void
 };
 
 const StoryList: React.SFC<StoryListProps> = (props) => {
   return (
-    <Item.Group>
+    <Item.Group divided={true}>
       {props.stories.map((story, i) =>
         <Item
+          style={story.id && props.selected && props.selected.id && story.id.id === props.selected.id.id
+            ? {'backgroundColor': 'rgba(0, 0, 0, 0.08)'}
+            : {}
+          }
           key={i}
           onClick={() => {
             if (story.id && story.id.id) {
@@ -19,10 +24,11 @@ const StoryList: React.SFC<StoryListProps> = (props) => {
             }
           }}
         >
-          <Item.Content>
+          <Item.Content
+
+          >
             <Item.Header as="a">{story.title}</Item.Header>
-            <Item.Meta>By: {story.by}</Item.Meta>
-            <Item.Extra>{story.score} {story.time}</Item.Extra>
+            <Item.Extra><Icon  name="star" />{story.score} | <Icon  name="user" />{story.by}</Item.Extra>
           </Item.Content>
         </Item>
       )}

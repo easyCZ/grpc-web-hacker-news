@@ -6,6 +6,7 @@ type StoryViewProps = {
 };
 
 const StoryView: React.SFC<StoryViewProps> = (props) => {
+  const url = `http://localhost:8900/article-proxy?q=${encodeURIComponent(props.story.url)}`;
   return (
     <iframe
       frameBorder="0"
@@ -13,7 +14,7 @@ const StoryView: React.SFC<StoryViewProps> = (props) => {
         height: '100vh',
         width: '100%',
       }}
-      src={props.story.url}
+      src={url}
     />
   );
 };

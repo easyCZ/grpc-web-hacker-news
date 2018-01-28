@@ -38,6 +38,7 @@ class Stories extends React.Component<StoriesProps, {}> {
         <Grid columns={2} stackable={true} divided={'vertically'}>
           <Grid.Column width={4}>
             <StoryList
+              selected={this.props.selected}
               stories={this.props.stories}
               onStorySelect={(id: number) => this.props.dispatch(selectStory(id))}
             />

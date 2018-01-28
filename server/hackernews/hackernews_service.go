@@ -31,28 +31,3 @@ func (s *hackerNewsService) ListStories(req *hackernews_pb.ListStoriesRequest, r
 
 	return nil
 }
-
-//func (s *hackerNewsService) GetStory(ctx context.Context, req *hackernews_pb.GetStoryRequest) (*hackernews_pb.GetStoryResponse, error) {
-//	if req.Id == nil {
-//		return nil, errors.New("Req id is nil")
-//	}
-//	story, err := s.api.GetStory(int(req.Id.Id))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	body := []byte("")
-//	if story.Url != "" {
-//		body, err = GetPageBody(story.Url)
-//		if err != nil {
-//			fmt.Printf("Failed to get %v", story.Url)
-//		}
-//	}
-//
-//
-//
-//	return &hackernews_pb.GetStoryResponse{
-//		Html:  body,
-//		Story: story,
-//	}, nil
-//}

@@ -1,15 +1,13 @@
 package proxy
 
 import (
-	"fmt"
 	"net/http"
 	"bufio"
 )
 
 func Article(w http.ResponseWriter, r *http.Request) {
-	//url := chi.URLParam(request, "q") // URL encoded url we want to proxy serve
-	url := "http://www.bbc.com/news/health-42736764"
-	fmt.Println("url", url)
+	queryValues := r.URL.Query()
+	url := queryValues.Get("q")
 	if url == "" {
 		http.Error(w, "Must specify the url to request", 400)
 	}
