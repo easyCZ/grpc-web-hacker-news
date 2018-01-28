@@ -1,8 +1,11 @@
 import * as React from 'react';
+import { Item } from './proto/hackernews_pb';
 
-const StoryView: React.SFC<{}> = (props) => {
-  const url = 'http://localhost:8900/article-proxy?q=' +
-    'https%3A%2F%2Fstackshare.io%2Fstream%2Fstream-and-go-news-feeds-for-over-300-million-end-users';
+type StoryViewProps = {
+  story: Item.AsObject,
+};
+
+const StoryView: React.SFC<StoryViewProps> = (props) => {
   return (
     <iframe
       frameBorder="0"
@@ -10,7 +13,7 @@ const StoryView: React.SFC<{}> = (props) => {
         height: '100vh',
         width: '100%',
       }}
-      src={url}
+      src={props.story.url}
     />
   );
 };

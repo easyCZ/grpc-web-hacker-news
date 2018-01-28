@@ -6,6 +6,7 @@ import (
 	"log"
 	"fmt"
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
+	"errors"
 )
 
 type Item struct {
@@ -63,25 +64,27 @@ func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Item, error) {
 	}, nil
 }
 
-func (api *hackerNewsApi) TopStories(stories chan<- *hackernews_pb.Item) error {
+func (api *hackerNewsApi) TopStories() (chan *hackernews_pb.Item, error) {
+	stories := make(chan *hackernews_pb.Item)
 	ref, err := api.topStoriesRef()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var ids []float64
 	if err := ref.Value(&ids); err != nil {
-		log.Fatalf("Failed to get top stories")
+		return nil, errors.New("failed to get top stories")
 	}
 
+	ids = ids[:10]
 	for _, id := range ids {
-		go func() {
-			story, _ := api.GetStory(int(id))
+		go func(id int) {
+			story, _ := api.GetStory(id)
 			stories <- story
-		}()
+		}(int(id))
 	}
 
-	return nil
+	return stories, nil
 }
 
 func (api *hackerNewsApi) topStoriesRef() (*firego.Firebase, error) {

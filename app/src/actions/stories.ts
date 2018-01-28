@@ -8,7 +8,7 @@ import { PingService } from '../proto/ping_pb_service';
 
 export const STORIES_INIT = 'STORIES_INIT';
 export const ADD_STORY = 'ADD_STORY';
-
+export const SELECT_STORY = 'SELECT_STORY';
 
 export const ping = () => {
   return grpcRequest<PingRequest, PingResponse>({
@@ -24,6 +24,17 @@ export const ping = () => {
     }
   });
 };
+
+type AddStory = {
+  type: typeof ADD_STORY,
+  payload: Item,
+};
+export const addStory = (story: Item) => ({ type: ADD_STORY, payload: story });
+
+type ListStoriesInit = {
+  type: typeof STORIES_INIT,
+};
+export const listStoriesInit = (): ListStoriesInit => ({type: STORIES_INIT});
 
 export const listStories = () => {
   return grpcRequest<ListStoriesRequest, ListStoriesResponse>({
@@ -45,19 +56,14 @@ export const listStories = () => {
   });
 };
 
-type ListStoriesInit = {
-  type: typeof STORIES_INIT,
+type SelectStory = {
+  type: typeof SELECT_STORY,
+  payload: number,
 };
-export const listStoriesInit = (): ListStoriesInit => ({type: STORIES_INIT});
-
-type AddStory = {
-  type: typeof ADD_STORY,
-  payload: Item,
-};
-
-export const addStory = (story: Item) => ({ type: ADD_STORY, payload: story });
+export const selectStory = (storyId: number): SelectStory => ({ type: SELECT_STORY, payload: storyId });
 
 export type StoryActionTypes =
   | ListStoriesInit
   | AddStory
+  | SelectStory
   | GrpcAction<ListStoriesRequest, ListStoriesResponse>;

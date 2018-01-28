@@ -2,6 +2,7 @@ package hackernews
 
 import (
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
+	"fmt"
 )
 
 type hackerNewsService struct {
@@ -16,10 +17,13 @@ func NewHackerNewsService(api *hackerNewsApi) *hackerNewsService {
 }
 
 func (s *hackerNewsService) ListStories(req *hackernews_pb.ListStoriesRequest, resp hackernews_pb.HackerNewsService_ListStoriesServer) error {
-	stories := make(chan *hackernews_pb.Item)
+	stories, err := s.api.TopStories()
 	defer close(stories)
-	s.api.TopStories(stories)
+	if err != nil {
+		return err
+	}
 	for story := range stories {
+		fmt.Println("Received story", story.Title)
 		resp.Send(&hackernews_pb.ListStoriesResponse{
 			Story: story,
 		})

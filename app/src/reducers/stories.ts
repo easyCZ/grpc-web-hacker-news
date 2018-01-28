@@ -1,29 +1,19 @@
 import { RootAction } from '../actions';
-import { ADD_STORY, STORIES_INIT } from '../actions/stories';
+import { ADD_STORY, SELECT_STORY, STORIES_INIT } from '../actions/stories';
 import { Item } from '../proto/hackernews_pb';
-
-export type StoryId = number;
-
-export type Story = {
-  id: StoryId,
-  score: number,
-  title: string,
-  by: string,
-  time: number,
-  url: string,
-  type: string,
-};
 
 export type StoryState = {
   readonly stories: { [storyId: number]: Item.AsObject },
   readonly error: Error | null,
   readonly loading: boolean,
+  readonly selected: Item.AsObject | null,
 };
 
 const initialState = {
   stories: {},
   error: null,
-  loading: false
+  loading: false,
+  selected: null,
 };
 
 export default function (state: StoryState = initialState, action: RootAction): StoryState {
@@ -35,10 +25,19 @@ export default function (state: StoryState = initialState, action: RootAction): 
 
     case ADD_STORY:
       const story: Item.AsObject = action.payload.toObject();
+      const selected = state.selected !== null ? state.selected : story;
       if (story.id && story.id.id) {
-        return {...state, loading: false, stories: {...state.stories, [story.id.id]: story}};
+        return {
+          ...state,
+          loading: false,
+          stories: {...state.stories, [story.id.id]: story},
+          selected,
+        };
       }
       return state;
+
+    case SELECT_STORY:
+      return {...state, selected: state.stories[action.payload]};
 
     default:
       return state;
