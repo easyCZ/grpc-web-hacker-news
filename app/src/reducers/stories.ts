@@ -26,7 +26,7 @@ export default function (state: StoryState = initialState, action: RootAction): 
     case ADD_STORY:
       const story: Story.AsObject = action.payload.toObject();
       const selected = state.selected !== null ? state.selected : story;
-      if (story.id && story.id) {
+      if (story.id) {
         return {
           ...state,
           loading: false,
