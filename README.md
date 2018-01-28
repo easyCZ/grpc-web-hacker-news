@@ -12,6 +12,9 @@ To start both the Go backend server and the frontend React application, run the 
 
 The backend server is running on `http://localhost:8900` while the frontend will by default start on `http://localhost:3000`
 
+## Contributing
+Contributions are welcome, please open an Issue or raise a PR.
+
 ## Notable setup points
 
 ### Disable TSLint for protobuf generated classes
