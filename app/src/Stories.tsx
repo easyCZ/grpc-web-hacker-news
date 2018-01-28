@@ -6,14 +6,14 @@ import StoryList from './StoryList';
 import StoryView from './StoryView';
 import { RootAction } from './actions';
 import { listStories, selectStory } from './actions/stories';
-import { Item } from './proto/hackernews_pb';
+import { Story } from './proto/hackernews_pb';
 
 type StoriesProps = {
-  stories: Item.AsObject[],
+  stories: Story.AsObject[],
   loading: boolean,
   error: Error | null,
   dispatch: Dispatch<RootAction>,
-  selected: Item.AsObject | null,
+  selected: Story.AsObject | null,
 };
 
 class Stories extends React.Component<StoriesProps, {}> {

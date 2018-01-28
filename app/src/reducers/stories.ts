@@ -1,12 +1,12 @@
 import { RootAction } from '../actions';
 import { ADD_STORY, SELECT_STORY, STORIES_INIT } from '../actions/stories';
-import { Item } from '../proto/hackernews_pb';
+import { Story } from '../proto/hackernews_pb';
 
 export type StoryState = {
-  readonly stories: { [storyId: number]: Item.AsObject },
+  readonly stories: { [storyId: number]: Story.AsObject },
   readonly error: Error | null,
   readonly loading: boolean,
-  readonly selected: Item.AsObject | null,
+  readonly selected: Story.AsObject | null,
 };
 
 const initialState = {
@@ -24,13 +24,13 @@ export default function (state: StoryState = initialState, action: RootAction): 
       return {...state, loading: true};
 
     case ADD_STORY:
-      const story: Item.AsObject = action.payload.toObject();
+      const story: Story.AsObject = action.payload.toObject();
       const selected = state.selected !== null ? state.selected : story;
-      if (story.id && story.id.id) {
+      if (story.id && story.id) {
         return {
           ...state,
           loading: false,
-          stories: {...state.stories, [story.id.id]: story},
+          stories: {...state.stories, [story.id]: story},
           selected,
         };
       }

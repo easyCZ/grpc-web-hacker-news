@@ -11,7 +11,6 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/go-chi/cors"
 	"github.com/easyCZ/grpc-web-hacker-news/server/proxy"
-	"github.com/easyCZ/grpc-web-hacker-news/server/ping"
 	"github.com/easyCZ/grpc-web-hacker-news/server/middleware"
 )
 
@@ -38,7 +37,6 @@ func main() {
 	)
 
 	router.Get("/article-proxy", proxy.Article)
-	router.Get("/ping", ping.Handler)
 
 	if err := http.ListenAndServe(":8900", router); err != nil {
 		grpclog.Fatalf("failed starting http2 server: %v", err)

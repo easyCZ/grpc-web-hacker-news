@@ -1,5 +1,5 @@
 import { Action } from 'redux';
-import { Item, ListStoriesRequest, ListStoriesResponse } from '../proto/hackernews_pb';
+import { ListStoriesRequest, ListStoriesResponse, Story } from '../proto/hackernews_pb';
 import { GrpcAction, grpcRequest } from '../middleware/grpc';
 import { Code, Metadata } from 'grpc-web-client';
 import { HackerNewsService } from '../proto/hackernews_pb_service';
@@ -10,9 +10,9 @@ export const SELECT_STORY = 'SELECT_STORY';
 
 type AddStory = {
   type: typeof ADD_STORY,
-  payload: Item,
+  payload: Story,
 };
-export const addStory = (story: Item) => ({ type: ADD_STORY, payload: story });
+export const addStory = (story: Story) => ({ type: ADD_STORY, payload: story });
 
 type ListStoriesInit = {
   type: typeof STORIES_INIT,

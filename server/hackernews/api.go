@@ -24,7 +24,7 @@ type hackerNewsApi struct {
 }
 
 type ItemResult struct {
-	Item  *hackernews_pb.Item
+	Item  *hackernews_pb.Story
 	Error error
 }
 
@@ -35,7 +35,7 @@ func NewHackerNewsApi(client *http.Client) *hackerNewsApi {
 	}
 }
 
-func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Item, error) {
+func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Story, error) {
 	ref, err := api.storyRef(id)
 	if err != nil {
 		log.Fatalf("Failed to get story reference")
@@ -45,27 +45,18 @@ func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Item, error) {
 		log.Fatal("failed to get Story %d", id, err)
 	}
 
-	var itemType hackernews_pb.ItemType
-	switch value.Type {
-	case "story":
-		itemType = hackernews_pb.ItemType_STORY
-	default:
-		itemType = hackernews_pb.ItemType_UNKNOWN
-
-	}
-	return &hackernews_pb.Item{
-		Id:    &hackernews_pb.ItemId{Id: value.Id},
+	return &hackernews_pb.Story{
+		Id:    value.Id,
 		By:    value.By,
 		Score: value.Score,
 		Time:  value.Time,
 		Title: value.Title,
-		Type:  itemType,
 		Url:   value.Url,
 	}, nil
 }
 
-func (api *hackerNewsApi) TopStories() (chan *hackernews_pb.Item, error) {
-	stories := make(chan *hackernews_pb.Item)
+func (api *hackerNewsApi) TopStories() (chan *hackernews_pb.Story, error) {
+	stories := make(chan *hackernews_pb.Story)
 	ref, err := api.topStoriesRef()
 	if err != nil {
 		return nil, err

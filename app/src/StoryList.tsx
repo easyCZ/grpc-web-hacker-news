@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Item, Icon } from 'semantic-ui-react';
-import {Item as Story } from './proto/hackernews_pb';
+import { Story } from './proto/hackernews_pb';
 
 type StoryListProps = {
   stories: Story.AsObject[],
@@ -13,14 +13,14 @@ const StoryList: React.SFC<StoryListProps> = (props) => {
     <Item.Group divided={true}>
       {props.stories.map((story, i) =>
         <Item
-          style={story.id && props.selected && props.selected.id && story.id.id === props.selected.id.id
+          style={props.selected && story.id === props.selected.id
             ? {'backgroundColor': 'rgba(0, 0, 0, 0.08)'}
             : {}
           }
           key={i}
           onClick={() => {
-            if (story.id && story.id.id) {
-              props.onStorySelect(story.id.id);
+            if (story.id) {
+              props.onStorySelect(story.id);
             }
           }}
         >

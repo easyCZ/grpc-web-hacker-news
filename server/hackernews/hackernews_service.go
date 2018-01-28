@@ -2,7 +2,6 @@ package hackernews
 
 import (
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
-	"fmt"
 )
 
 type hackerNewsService struct {
@@ -23,7 +22,6 @@ func (s *hackerNewsService) ListStories(req *hackernews_pb.ListStoriesRequest, r
 		return err
 	}
 	for story := range stories {
-		fmt.Println("Received story", story.Title)
 		resp.Send(&hackernews_pb.ListStoriesResponse{
 			Story: story,
 		})

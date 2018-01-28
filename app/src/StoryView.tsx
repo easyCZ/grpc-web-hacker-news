@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Item } from './proto/hackernews_pb';
+import { Story } from './proto/hackernews_pb';
 
 type StoryViewProps = {
-  story: Item.AsObject,
+  story: Story.AsObject,
 };
 
 const StoryView: React.SFC<StoryViewProps> = (props) => {
