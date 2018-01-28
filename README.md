@@ -40,6 +40,42 @@ protoc \
     ./proto/hackernews.proto
 ```
 
+### Generated proto classes with Redux
+Redux favors plain objects over object instances. This complicates usage of the generated proto classes, in this example class [`Story`](https://github.com/easyCZ/grpc-web-hacker-news/blob/master/app/src/proto/hackernews_pb.d.ts#L6). In order to use the generated classes with redux, we must use the `Story.AsObject` type which is the plain object representation. For example our reducer should look like this:
+
+```js
+export type StoryState = {
+  readonly stories: { [storyId: number]: Story.AsObject },
+  readonly error: Error | null,
+  readonly loading: boolean,
+  readonly selected: Story.AsObject | null,
+};
+
+export default function (state: StoryState = initialState, action: RootAction): StoryState {
+
+  switch (action.type) {
+
+    case ADD_STORY:
+      const story: Story.AsObject = action.payload.toObject();
+      const selected = state.selected !== null ? state.selected : story;
+      if (story.id && story.id) {
+        return {
+          ...state,
+          loading: false,
+          stories: {...state.stories, [story.id]: story},
+          selected,
+        };
+      }
+      return state;
+      
+    default:
+      return state;
+  }
+
+}
+```
+Note the usage of `Story.AsObject` rather than just `Story`
+
 ### gRPC-Web Redux Middleware
 An [example redux middleware is included](https://github.com/easyCZ/grpc-web-hacker-news/blob/master/app/src/middleware/grpc.ts).
 ```js
