@@ -3,7 +3,6 @@ import { Code, grpc, Metadata, Transport } from 'grpc-web-client';
 import * as jspb from 'google-protobuf';
 
 const GRPC_WEB_REQUEST = 'GRPC_WEB_REQUEST';
-// const GRPC_WEB_INVOKE = 'GRPC_WEB_INVOKE';
 
 // Descriptor of a grpc-web payload
 // life-cycle methods mirror grpc-web but allow for an action to be dispatched when triggered
