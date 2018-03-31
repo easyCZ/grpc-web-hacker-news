@@ -30,7 +30,6 @@ class Stories extends React.Component<StoriesProps, {}> {
   }
 
   render() {
-    console.log(this.props.stories);
     return (
       <Container style={{padding: '1em'}} fluid={true}>
         <Header as="h1" dividing={true}>Hacker News with gRPC-Web</Header>
