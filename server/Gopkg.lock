@@ -22,7 +22,7 @@
 [[projects]]
   name = "github.com/improbable-eng/grpc-web"
   packages = ["go/grpcweb"]
-  revision = "e78ac9489c846d8b3c5b09d2d7e6058667219773"
+  revision = "9cca7d4530683dc49fc10cf627309ce4be119af5"
 
 [[projects]]
   name = "github.com/rs/cors"
