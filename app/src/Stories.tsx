@@ -12,21 +12,16 @@ type StoriesProps = {
   stories: Story.AsObject[],
   loading: boolean,
   error: Error | null,
-  dispatch: Dispatch<RootAction>,
   selected: Story.AsObject | null,
+
+  fetchStories: () => void,
+  selectStory: (id: number) => void,
 };
 
 class Stories extends React.Component<StoriesProps, {}> {
 
-  constructor(props: StoriesProps) {
-    super(props);
-    this.state = {
-      selected: null,
-    };
-  }
-
   componentDidMount() {
-    this.props.dispatch(listStories());
+    this.props.fetchStories();
   }
 
   render() {
@@ -39,7 +34,7 @@ class Stories extends React.Component<StoriesProps, {}> {
             <StoryList
               selected={this.props.selected}
               stories={this.props.stories}
-              onStorySelect={(id: number) => this.props.dispatch(selectStory(id))}
+              onStorySelect={this.props.selectStory}
             />
           </Grid.Column>
 
@@ -66,4 +61,15 @@ function mapStateToProps(state: RootState) {
   };
 }
 
-export default connect(mapStateToProps)(Stories);
+function mapDispatchToProps(dispatch: Dispatch<RootAction>) {
+  return {
+    fetchStories: () => {
+      dispatch(listStories());
+    },
+    selectStory: (storyId: number) => {
+      dispatch(selectStory(storyId));
+    },
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Stories);
