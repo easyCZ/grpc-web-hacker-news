@@ -1,0 +1,12 @@
+steps:
+  - label: Build
+    plugins:
+      docker-compose#v2.0.0:
+        build: app
+
+  - wait
+
+  - label: Run
+    plugins:
+      docker-compose#v2.0.0:
+        run: app
