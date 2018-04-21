@@ -1,0 +1,7 @@
+steps:
+  - label: Run
+    plugins:
+      docker-compose#v2.0.0:
+        build: app
+
+  - wait

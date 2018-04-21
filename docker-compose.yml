@@ -1,0 +1,12 @@
+version: '2'
+services:
+  db:
+    image: postgres
+  app:
+    image: test
+    depends_on:
+      - db
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+
