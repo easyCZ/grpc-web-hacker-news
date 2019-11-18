@@ -7,7 +7,7 @@
     "google-protobuf": "^3.5.0",
     "grpc-web-client": "^0.3.1",
     "react": "^16.2.0",
-    "react-dom": "^16.2.0",
+    "react-dom": "^16.2.1",
     "react-redux": "^5.0.6",
     "react-scripts-ts": "2.10.0",
     "redux": "^3.7.2",
