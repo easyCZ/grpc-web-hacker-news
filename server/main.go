@@ -1,17 +1,16 @@
 package main
 
 import (
+	"github.com/easyCZ/grpc-web-hacker-news/server/hackernews"
+	"github.com/easyCZ/grpc-web-hacker-news/server/middleware"
+	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
+	"github.com/easyCZ/grpc-web-hacker-news/server/proxy"
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
-	"google.golang.org/grpc"
-	"net/http"
-	"github.com/easyCZ/grpc-web-hacker-news/server/hackernews"
-	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
-	"google.golang.org/grpc/grpclog"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"github.com/go-chi/cors"
-	"github.com/easyCZ/grpc-web-hacker-news/server/proxy"
-	"github.com/easyCZ/grpc-web-hacker-news/server/middleware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
+	"net/http"
 )
 
 func main() {
@@ -19,21 +18,16 @@ func main() {
 	hackernewsService := hackernews.NewHackerNewsService(nil)
 	hackernews_pb.RegisterHackerNewsServiceServer(grpcServer, hackernewsService)
 
-	wrappedGrpc := grpcweb.WrapServer(grpcServer)
+	wrappedGrpc := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
+		// Allow all origins, DO NOT do this in production
+		return true
+	}))
 
 	router := chi.NewRouter()
 	router.Use(
 		chiMiddleware.Logger,
 		chiMiddleware.Recoverer,
-		middleware.NewGrpcWebMiddleware(wrappedGrpc).Handler,	// Must come before general CORS handling
-		cors.New(cors.Options{
-			AllowedOrigins: []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", },
-			ExposedHeaders:   []string{"Link"},
-			AllowCredentials: true,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
-		}).Handler,
+		middleware.NewGrpcWebMiddleware(wrappedGrpc).Handler,
 	)
 
 	router.Get("/article-proxy", proxy.Article)
