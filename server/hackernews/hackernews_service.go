@@ -8,11 +8,8 @@ type hackerNewsService struct {
 	api *hackerNewsApi
 }
 
-func NewHackerNewsService(api *hackerNewsApi) *hackerNewsService {
-	if api == nil {
-		api = NewHackerNewsApi(nil)
-	}
-	return &hackerNewsService{api}
+func NewHackerNewsService() *hackerNewsService {
+	return &hackerNewsService{NewHackerNewsApi()}
 }
 
 func (s *hackerNewsService) ListStories(req *hackernews_pb.ListStoriesRequest, resp hackernews_pb.HackerNewsService_ListStoriesServer) error {

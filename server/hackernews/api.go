@@ -1,12 +1,11 @@
 package hackernews
 
 import (
-	"gopkg.in/zabawaba99/firego.v1"
-	"net/http"
-	"log"
+	"errors"
 	"fmt"
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
-	"errors"
+	"gopkg.in/zabawaba99/firego.v1"
+	"log"
 )
 
 type Item struct {
@@ -28,8 +27,8 @@ type ItemResult struct {
 	Error error
 }
 
-func NewHackerNewsApi(client *http.Client) *hackerNewsApi {
-	firebase := firego.New("https://hacker-news.firebaseio.com", client)
+func NewHackerNewsApi() *hackerNewsApi {
+	firebase := firego.New("https://hacker-news.firebaseio.com", nil)
 	return &hackerNewsApi{
 		Firebase: firebase,
 	}
