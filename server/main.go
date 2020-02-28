@@ -30,8 +30,6 @@ func main() {
 		middleware.NewGrpcWebMiddleware(wrappedGrpc).Handler,
 	)
 
-	router.Get("/article-proxy", proxy.Article)
-
 	if err := http.ListenAndServe(":8900", router); err != nil {
 		grpclog.Fatalf("failed starting http2 server: %v", err)
 	}
