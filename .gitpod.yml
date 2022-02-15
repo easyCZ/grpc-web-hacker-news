@@ -8,5 +8,5 @@ tasks:
     command: go run
 
   - name: NPM deps
-    init: cd app && npm install
-    command: cd app && npm run
+    init: npm install
+    command: npm run
