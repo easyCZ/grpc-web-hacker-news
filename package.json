@@ -1,0 +1,30 @@
+{
+  "name": "grpc-web-hacker-news",
+  "source": "app/index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "version": "1.0.0",
+  "description": "Using grpc-web to build a hacker news reader",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easyCZ/grpc-web-hacker-news.git"
+  },
+  "author": "easyCZ",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/easyCZ/grpc-web-hacker-news/issues"
+  },
+  "homepage": "https://github.com/easyCZ/grpc-web-hacker-news#readme",
+  "devDependencies": {
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.11",
+    "add": "^2.0.6",
+    "parcel": "^2.3.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "yarn": "^1.22.17"
+  }
+}
