@@ -1,9 +1,9 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import './index.css';
-import store from './store';
-import Stories from './Stories';
+import './src/index.css';
+import store from './src/store';
+import Stories from './src/Stories';
 
 ReactDOM.render(
   <Provider store={store}>
