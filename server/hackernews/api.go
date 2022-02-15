@@ -1,12 +1,13 @@
 package hackernews
 
 import (
-	"gopkg.in/zabawaba99/firego.v1"
-	"net/http"
-	"log"
-	"fmt"
-	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
 	"errors"
+	"fmt"
+	"log"
+	"net/http"
+
+	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
+	"gopkg.in/zabawaba99/firego.v1"
 )
 
 type Item struct {
@@ -42,7 +43,7 @@ func (api *hackerNewsApi) GetStory(id int) (*hackernews_pb.Story, error) {
 	}
 	var value Item
 	if err := ref.Value(&value); err != nil {
-		log.Fatal("failed to get Story %d", id, err)
+		log.Fatal("failed to get Story", id, err)
 	}
 
 	return &hackernews_pb.Story{
