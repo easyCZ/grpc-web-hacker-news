@@ -6,7 +6,8 @@
   "description": "Using grpc-web to build a hacker news reader",
   "scripts": {
     "start": "parcel",
-    "build": "parcel build"
+    "build": "parcel build",
+    "test": "echo 'TODO'"
   },
   "repository": {
     "type": "git",
