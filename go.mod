@@ -3,7 +3,7 @@ module github.com/easyCZ/grpc-web-hacker-news
 go 1.17
 
 require (
-	github.com/go-chi/chi v1.5.4
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/golang/protobuf v1.5.2
 	github.com/improbable-eng/grpc-web v0.15.0
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd

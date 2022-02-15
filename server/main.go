@@ -1,16 +1,19 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/easyCZ/grpc-web-hacker-news/server/hackernews"
 	"github.com/easyCZ/grpc-web-hacker-news/server/middleware"
 	hackernews_pb "github.com/easyCZ/grpc-web-hacker-news/server/proto"
 	"github.com/easyCZ/grpc-web-hacker-news/server/proxy"
-	"github.com/go-chi/chi"
-	chiMiddleware "github.com/go-chi/chi/middleware"
+
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
-	"net/http"
 )
 
 func main() {
@@ -32,7 +35,8 @@ func main() {
 
 	router.Get("/article-proxy", proxy.Article)
 
+	log.Println("Serving API on http://127.0.0.1:8900")
 	if err := http.ListenAndServe(":8900", router); err != nil {
-		grpclog.Fatalf("failed starting http2 server: %v", err)
+		log.Fatalf("failed starting http2 server: %v", err)
 	}
 }
