@@ -6,7 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/golang/protobuf v1.5.2
 	github.com/improbable-eng/grpc-web v0.15.0
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	golang.org/x/net v0.7.0
 	google.golang.org/grpc v1.44.0
 	gopkg.in/zabawaba99/firego.v1 v1.0.0-20190331000051-3bcc4b6a4599
 )
@@ -17,8 +17,8 @@ require (
 	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/zabawaba99/firego v0.0.0-20190331000051-3bcc4b6a4599 // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20220211171837-173942840c17 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
