@@ -23,7 +23,7 @@
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.11",
     "add": "^2.0.6",
-    "google-protobuf": "3.0.0",
+    "google-protobuf": "^3.19.4",
     "grpc-web-client": "^0.7.0",
     "parcel": "^2.3.1",
     "react": "^17.0.2",
@@ -32,5 +32,8 @@
     "semantic-ui-react": "^2.1.1",
     "typescript": "^4.5.5",
     "yarn": "^1.22.17"
+  },
+  "dependencies": {
+    "grpc-web-hacker-news": "file:"
   }
 }
