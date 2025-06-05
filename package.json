@@ -34,6 +34,9 @@
     "yarn": "^1.22.17"
   },
   "dependencies": {
-    "grpc-web-hacker-news": "file:"
+    "grpc-web-hacker-news": "file:",
+    "protoc-gen-js": "^3.21.4-4",
+    "protoc-gen-ts": "^0.8.7",
+    "ts-proto": "^2.7.2"
   }
 }
